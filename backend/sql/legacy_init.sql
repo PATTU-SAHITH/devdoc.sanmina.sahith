@@ -1,3 +1,11 @@
+-- DEPRECATED: replaced by the Alembic migrations in backend/migrations/.
+-- Nothing runs this file any more. It is kept only so a database that this
+-- file built can be tested with `alembic stamp 0001` (tests/test_postgres.py),
+-- and so the seven tables nothing in the app uses (incidents, release_master,
+-- reviewers_log, gantt_tasks, test_suites, test_cases, test_runs) stay on
+-- record until it is confirmed that no one outside the app reads them.
+-- Delete it after that.
+--
 -- ==========================================================
 -- Engineering Platform Suite: PostgreSQL Database Schema
 -- Database: platform_db

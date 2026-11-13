@@ -1,5 +1,7 @@
 """Postgres repositories: the exact statements the Node API issued."""
 
+import hashlib
+import secrets
 from datetime import datetime
 from typing import Any
 
@@ -7,7 +9,7 @@ from psycopg_pool import AsyncConnectionPool
 
 from app.models.document import DocumentRecord, DocumentWrite
 from app.models.user import LoginCandidate, User
-from app.repositories.base import Repositories
+from app.repositories.base import Repositories, iso_z
 
 _DOC_COLUMNS = "id, author, status, document_json, updated_at"
 
@@ -24,8 +26,8 @@ class _PgRepository:
 
 class PgUserRepository(_PgRepository):
     async def find_login_candidate(self, email_lower: str) -> LoginCandidate | None:
-        rows = await self._fetch("SELECT id, password_hash FROM users WHERE lower(email) = %s", (email_lower,))
-        return LoginCandidate(id=rows[0]["id"], password_hash=rows[0]["password_hash"]) if rows else None
+        rows = await self._fetch("SELECT id, password FROM users WHERE lower(email) = %s", (email_lower,))
+        return LoginCandidate(id=rows[0]["id"], password=rows[0]["password"]) if rows else None
 
 
 class PgSessionRepository(_PgRepository):
@@ -45,6 +47,52 @@ class PgSessionRepository(_PgRepository):
             (session_id,),
         )
         return User(**rows[0]) if rows else None
+
+
+class PgSessionAuditRepository(_PgRepository):
+    async def record_login(self, session_id: str, user: User, login_at: datetime, expires_at: datetime) -> None:
+        await self._fetch(
+            """INSERT INTO session_audit (id, session_id_hash, user_id, user_name, role, login_at, expires_at)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (secrets.token_hex(8), _session_hash(session_id), user.id, user.name, user.role, login_at, expires_at),
+        )
+
+    async def record_logout(self, session_id: str, logout_at: datetime) -> None:
+        # Once only, and not for a session that had already timed out: it stays "expired".
+        await self._fetch(
+            """UPDATE session_audit SET logout_at = %s
+                WHERE session_id_hash = %s AND logout_at IS NULL AND expires_at > %s""",
+            (logout_at, _session_hash(session_id), logout_at),
+        )
+
+    async def recent(self, limit: int = 200) -> list[dict[str, Any]]:
+        rows = await self._fetch(
+            f"{_AUDIT_SELECT} ORDER BY login_at DESC, seq DESC LIMIT %s",
+            (limit,),
+        )
+        return [_audit_entry(r) for r in rows]
+
+    async def export_all(self) -> list[dict[str, Any]]:
+        return [_audit_entry(r) for r in await self._fetch(f"{_AUDIT_SELECT} ORDER BY login_at, seq")]
+
+
+_AUDIT_SELECT = "SELECT id, user_id, user_name, role, login_at, logout_at, expires_at FROM session_audit"
+
+
+def _audit_entry(r: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": r["id"],
+        "userId": r["user_id"],
+        "userName": r["user_name"],
+        "role": r["role"],
+        "loginTime": iso_z(r["login_at"]),
+        "logoutTime": iso_z(r["logout_at"]) if r["logout_at"] else None,
+        "expiresAt": iso_z(r["expires_at"]),
+    }
+
+
+def _session_hash(session_id: str) -> str:
+    return hashlib.sha256(session_id.encode()).hexdigest()
 
 
 def _record(row: dict[str, Any]) -> DocumentRecord:
@@ -122,4 +170,5 @@ def postgres_repositories(pool: AsyncConnectionPool) -> Repositories:
         users=PgUserRepository(pool),
         sessions=PgSessionRepository(pool),
         documents=PgDocumentRepository(pool),
+        session_audit=PgSessionAuditRepository(pool),
     )

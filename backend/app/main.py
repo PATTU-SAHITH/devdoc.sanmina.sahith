@@ -31,7 +31,6 @@ from app.repositories.document_history import DocumentHistoryStore
 from app.repositories.postgres import postgres_repositories
 from app.repositories.releases import ReleaseStore
 from app.repositories.schedules import ScheduleStore
-from app.repositories.session_audit import SessionAuditStore
 from app.repositories.test_exec import RemoteJobStore, TestExecRepository
 from app.repositories.test_management import TestManagementStore
 from app.repositories.test_servers import TestServerStore
@@ -74,18 +73,17 @@ logger = logging.getLogger("devdoc.api")
 
 
 def build_services(settings: Settings, repos: Repositories, http_client: httpx.AsyncClient, redis: Redis) -> Services:
-    session_audit = SessionAuditStore(redis)
     test_store = TestManagementStore(redis)
     documents = CachedDocumentRepository(repos.documents, redis)
     test_servers = TestServerService(TestServerStore(redis), SecretBox(settings.secrets_key), http_client)
     trackers = TrackerService(redis, SecretBox(settings.secrets_key), http_client)
     remote_runs = RemoteRunService(RemoteJobStore(redis), test_servers, redis, test_store)
     return Services(
-        auth=AuthService(repos, session_audit),
-        session_audit=session_audit,
+        auth=AuthService(repos),
+        session_audit=repos.session_audit,
         collections=CollectionService(CollectionStore(redis)),
         documents=DocumentService(documents, DocumentHistoryStore(redis)),
-        admin=AdminService(documents, redis),
+        admin=AdminService(documents, redis, repos.session_audit),
         ai=AiService(settings, http_client),
         test_management=TestManagementService(test_store),
         test_servers=test_servers,

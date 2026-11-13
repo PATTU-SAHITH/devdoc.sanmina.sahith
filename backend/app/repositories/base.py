@@ -6,11 +6,16 @@ pg-mem played for the Node API, so neither needs a database).
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from app.models.document import DocumentRecord, DocumentWrite
 from app.models.user import LoginCandidate, User
+
+
+def iso_z(moment: datetime) -> str:
+    """UTC, millisecond precision, a trailing Z: the format the API has always returned."""
+    return moment.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 class UserRepository(Protocol):
@@ -23,6 +28,26 @@ class SessionRepository(Protocol):
     async def delete(self, session_id: str) -> None: ...
 
     async def find_active_user(self, session_id: str) -> User | None: ...
+
+
+class SessionAuditRepository(Protocol):
+    """The sign-in audit log (DDS-SRS-011): append-only, never trimmed."""
+
+    async def record_login(self, session_id: str, user: User, login_at: datetime, expires_at: datetime) -> None: ...
+
+    async def record_logout(self, session_id: str, logout_at: datetime) -> None:
+        """Marks the session's entry signed out. Does nothing if the session is
+        unknown, already signed out, or had already expired."""
+        ...
+
+    async def recent(self, limit: int = 200) -> list[dict[str, Any]]:
+        """Newest sign-in first: id, userId, userName, role, loginTime,
+        logoutTime, expiresAt (ISO strings)."""
+        ...
+
+    async def export_all(self) -> list[dict[str, Any]]:
+        """Every entry, oldest first, same shape as `recent` - for the admin backup."""
+        ...
 
 
 class DocumentRepository(Protocol):
@@ -57,3 +82,4 @@ class Repositories:
     users: UserRepository
     sessions: SessionRepository
     documents: DocumentRepository
+    session_audit: SessionAuditRepository

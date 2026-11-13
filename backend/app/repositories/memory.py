@@ -5,6 +5,8 @@ the Postgres repositories (ordering, soft delete, NOT NULL columns, case-
 insensitive email lookup) with no database to run.
 """
 
+import hashlib
+import secrets
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -12,7 +14,7 @@ from typing import Any
 from app.core.jscompat import js_loads
 from app.models.document import DocumentRecord, DocumentWrite
 from app.models.user import LoginCandidate, User
-from app.repositories.base import Repositories
+from app.repositories.base import Repositories, iso_z
 
 
 class IntegrityError(Exception):
@@ -22,7 +24,7 @@ class IntegrityError(Exception):
 @dataclass
 class _StoredUser:
     user: User
-    password_hash: str
+    password: str
 
 
 @dataclass
@@ -37,9 +39,10 @@ class MemoryStore:
     users: dict[str, _StoredUser] = field(default_factory=dict)
     sessions: dict[str, tuple[str, datetime]] = field(default_factory=dict)
     documents: dict[str, _StoredDocument] = field(default_factory=dict)
+    session_audit: list[dict[str, Any]] = field(default_factory=list)  # oldest first
 
-    def add_user(self, user: User, password_hash: str) -> None:
-        self.users[user.id] = _StoredUser(user, password_hash)
+    def add_user(self, user: User, password: str) -> None:
+        self.users[user.id] = _StoredUser(user, password)
 
     def document_deleted_at(self, document_id: str) -> datetime | None:
         return self.documents[document_id].deleted_at
@@ -52,7 +55,7 @@ class MemoryUserRepository:
     async def find_login_candidate(self, email_lower: str) -> LoginCandidate | None:
         for stored in self._store.users.values():
             if stored.user.email.lower() == email_lower:
-                return LoginCandidate(stored.user.id, stored.password_hash)
+                return LoginCandidate(stored.user.id, stored.password)
         return None
 
 
@@ -74,6 +77,45 @@ class MemorySessionRepository:
             return None
         stored = self._store.users.get(entry[0])
         return stored.user if stored else None
+
+
+class MemorySessionAuditRepository:
+    def __init__(self, store: MemoryStore) -> None:
+        self._store = store
+
+    async def record_login(self, session_id: str, user: User, login_at: datetime, expires_at: datetime) -> None:
+        self._store.session_audit.append(
+            {
+                "id": secrets.token_hex(8),
+                "_hash": _session_hash(session_id),
+                "userId": user.id,
+                "userName": user.name,
+                "role": user.role,
+                "loginTime": iso_z(login_at),
+                "logoutTime": None,
+                "expiresAt": iso_z(expires_at),
+                "_expires": expires_at,
+            }
+        )
+
+    async def record_logout(self, session_id: str, logout_at: datetime) -> None:
+        digest = _session_hash(session_id)
+        for entry in self._store.session_audit:
+            if entry["_hash"] == digest:
+                if entry["logoutTime"] is None and entry["_expires"] > logout_at:
+                    entry["logoutTime"] = iso_z(logout_at)
+                return
+
+    async def recent(self, limit: int = 200) -> list[dict[str, Any]]:
+        newest_first = reversed(self._store.session_audit)
+        return [{k: v for k, v in e.items() if not k.startswith("_")} for e in list(newest_first)[:limit]]
+
+    async def export_all(self) -> list[dict[str, Any]]:
+        return [{k: v for k, v in e.items() if not k.startswith("_")} for e in self._store.session_audit]
+
+
+def _session_hash(session_id: str) -> str:
+    return hashlib.sha256(session_id.encode()).hexdigest()
 
 
 def _to_record(stored: _StoredDocument) -> DocumentRecord:
@@ -137,4 +179,5 @@ def memory_repositories(store: MemoryStore) -> Repositories:
         users=MemoryUserRepository(store),
         sessions=MemorySessionRepository(store),
         documents=MemoryDocumentRepository(store),
+        session_audit=MemorySessionAuditRepository(store),
     )

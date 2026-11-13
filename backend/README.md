@@ -22,7 +22,7 @@ app/
   models/          domain records (User, DocumentRecord, Job, ...)
   schemas/         Pydantic models describing the wire contract for /openapi.json
   db/              connection pool, node-postgres-compatible parameter coercion
-sql/init.sql       Postgres schema + seed data (docker-compose runs it on first start)
+migrations/        Alembic schema migrations (`uv run alembic upgrade head`); docker-compose's `migrate` service runs them
 tests/             pytest suite; parity/ compares against the old Node API
 ```
 
@@ -33,7 +33,7 @@ tests/             pytest suite; parity/ compares against the old Node API
 | `GET /api/health` | `{"ok": true}` |
 | `POST /api/auth/token` | A JWT access token for the current session (DDS-SRS-076): HS256, one hour, usable as `Authorization: Bearer` on any route, and revoked when the session signs out (each use checks the session). Key: `JWT_SECRET`, else derived from `SECRETS_KEY`. |
 | `GET /api/auth/sso/config`, `/api/auth/sso/login`, `/api/auth/sso/callback` | Single sign-on with any OpenID Connect provider (`OIDC_*`): authorization code + PKCE, state bound to a cookie, nonce, ID token verified against the provider's JWKS. Signs in only existing accounts by email; never creates users. |
-| `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` | bcrypt check, random session id in an httpOnly `devdoc_sid` cookie, stored in `sessions` so logout revokes it at once. Login is rate-limited: 10 failures per IP per 15 min. |
+| `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` | email + password check (password stored as typed: dev-only, see Users below), random session id in an httpOnly `devdoc_sid` cookie, stored in `sessions` so logout revokes it at once. Login is rate-limited: 10 failures per IP per 15 min. |
 | `GET/PUT/DELETE /api/documents[/:id]`, `DELETE /api/documents/:id/purge` | Each route re-checks the frontend's edit/visibility rules server-side. DELETE is a soft delete; purge removes the row. |
 | `GET /api/ai/providers`, `POST /api/ai/rephrase`, `POST /api/ai/generate-test-cases` | Proxies Gemini/OpenAI with server-side keys. |
 | `GET/POST /api/test-servers`, `PUT/DELETE /api/test-servers/:id`, `POST /api/test-servers/:id/check` | Remote test servers (DDS-SRS-019): endpoint URL, auth (none / API key / Basic / OAuth2 client credentials) and payload parameters. Admins manage them. Credentials are encrypted at rest with AES-256-GCM under `SECRETS_KEY` (DDS-SRS-075) and never returned. `check` authenticates and sends GET to the endpoint, reporting only status and timing. |
@@ -59,20 +59,28 @@ uv sync
 uv run uvicorn app.main:app --reload --port 8000 --no-proxy-headers --no-server-header
 ```
 
-This needs a Postgres reachable at `DATABASE_URL`, seeded by the repo's
-`sql/init.sql` (docker-compose does this on first start), and a Redis at
+This needs a Postgres reachable at `DATABASE_URL` with the schema applied
+(`uv run alembic upgrade head`; docker-compose's `migrate` service does this
+on every `up`), and a Redis at
 `REDIS_URL` for test management data (`docker compose up redis`). Tests
 use an in-process fake Redis, so they need neither.
 
-## Demo accounts
+## Users (dev-only, temporary)
 
-These are seeded by `sql/init.sql`. All three use the password `devdoc-demo` (local/demo use only).
+There are no built-in accounts. Create one with the command-line tool, which asks
+for name, email, password, admin yes/no and (if not admin) a role
+(free text, not checked against a list):
 
-| Email | Role |
-|---|---|
-| mani.thangavel@sanmina.com | admin |
-| vaishnavi.aasaithambi@sanmina.com | release-manager |
-| sahith.pattu@sanmina.com | firmware-lead |
+```
+cd backend && uv run python -m app.db.create_user                 # outside Docker, from backend/ (it reads backend/.env)
+docker compose run --rm migrate python -m app.db.create_user      # with docker-compose
+```
+
+**The password is stored as typed, not hashed** (migration `0002`). This is a
+stand-in until the real user directory is connected, which will check
+passwords itself (single sign-on) or replace this table. Never put real people
+in it. An admin gets the role `admin`. Emails are stored lower-cased and must
+be unique.
 
 ## Tests
 
@@ -85,3 +93,22 @@ TEST_DATABASE_URL=postgresql://...  uv run pytest tests/test_postgres.py   # rea
 `tests/e2e_server.py` is the API the Playwright specs `e2e/backend-login.spec.ts`
 and `e2e/remote-test-execution.spec.ts` start. It runs on in-memory repositories,
 so no database is needed.
+
+## Schema migrations (Alembic)
+
+The schema is versioned in `migrations/versions/`, applied with
+`uv run alembic upgrade head`. There is no ORM, so migrations are hand-written
+SQL (`op.execute`).
+
+```
+uv run alembic current                       # which migration this database is at
+uv run alembic revision -m "add foo table"   # new empty migration (0002_...)
+uv run alembic upgrade head                  # apply everything missing
+uv run alembic downgrade -1                  # undo the last one
+uv run alembic upgrade head --sql            # print the SQL instead of running it
+```
+
+Rules: never edit the schema by hand or edit a migration that has been merged;
+write a new one, with a working `downgrade()`. `0001_baseline` creates its
+tables `IF NOT EXISTS` so databases built by the old `init.sql` adopt Alembic
+with a plain `upgrade head`; later migrations must not.
