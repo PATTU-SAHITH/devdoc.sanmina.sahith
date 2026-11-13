@@ -58,6 +58,10 @@ class MemoryUserRepository:
                 return LoginCandidate(stored.user.id, stored.password)
         return None
 
+    async def find_by_name(self, name: str) -> list[User]:
+        wanted = name.strip().lower()
+        return [s.user for s in self._store.users.values() if s.user.name.strip().lower() == wanted]
+
 
 class MemorySessionRepository:
     def __init__(self, store: MemoryStore) -> None:
@@ -123,6 +127,7 @@ def _to_record(stored: _StoredDocument) -> DocumentRecord:
     return DocumentRecord(
         id=w.id or "",
         author=w.author,
+        owner_id=w.owner_id,
         status=w.status,
         document_json=js_loads(w.document_json),
         updated_at=stored.updated_at,
@@ -150,6 +155,8 @@ class MemoryDocumentRepository:
         missing: list[Any] = [n for n in ("id", "doc_number", "title") if getattr(write, n) is None]
         if missing:
             raise IntegrityError(f"null value in NOT NULL column(s) {missing}")
+        if write.owner_id is not None and write.owner_id not in self._store.users:
+            raise IntegrityError("documents.owner_id references a missing user")
         self._store.documents[write.id] = _StoredDocument(write, datetime.now(UTC))  # type: ignore[index]
 
     async def soft_delete(self, document_id: str) -> None:
@@ -163,6 +170,7 @@ class MemoryDocumentRepository:
         return [
             {
                 "id": d.write.id,
+                "ownerId": d.write.owner_id,
                 "document": js_loads(d.write.document_json),
                 "updatedAt": d.updated_at.isoformat(),
                 "deletedAt": d.deleted_at.isoformat() if d.deleted_at else None,

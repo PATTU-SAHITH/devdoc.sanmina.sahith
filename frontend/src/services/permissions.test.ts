@@ -5,8 +5,8 @@ import {
 } from './permissions';
 
 const admin = makeUser({ name: 'Root Admin', role: 'admin' });
-const author = makeUser({ name: 'Ada Author', role: 'firmware-lead' });
-const other = makeUser({ name: 'Bob Other', role: 'release-manager' });
+const author = makeUser({ name: 'Ada Author', role: 'user' });
+const other = makeUser({ name: 'Bob Other', role: 'user' });
 
 describe('isAdmin', () => {
   it('is true only for the admin role', () => {

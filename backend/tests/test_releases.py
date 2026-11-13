@@ -3,10 +3,10 @@
 import json
 from typing import Any
 
-from tests.conftest import ADMIN, AUTHOR, OTHER, Agent, Api
+from tests.conftest import ADMIN, OTHER, Agent, Api
 
-# AUTHOR is a release manager, OTHER a firmware lead, ADMIN an admin.
-MANAGER = AUTHOR
+# Only admins manage releases: ADMIN is the manager, AUTHOR and OTHER are regular users.
+MANAGER = ADMIN
 BASE = "/api/releases"
 SHA = "a" * 64
 

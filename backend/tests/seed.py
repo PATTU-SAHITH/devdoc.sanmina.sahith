@@ -21,8 +21,8 @@ class TestUser:
 
 TEST_USERS = [
     TestUser("usr-01", "Manivannan Thangavel", "mani.thangavel@sanmina.com", "admin", "demo-pass-1"),
-    TestUser("usr-02", "Vaishnavi Aasaithambi", "vaishnavi.aasaithambi@sanmina.com", "release-manager", "demo-pass-2"),
-    TestUser("usr-03", "Judia Lumina", "judia.lumina@sanmina.com", "firmware-lead", "demo-pass-3"),
+    TestUser("usr-02", "Vaishnavi Aasaithambi", "vaishnavi.aasaithambi@sanmina.com", "user", "demo-pass-2"),
+    TestUser("usr-03", "Judia Lumina", "judia.lumina@sanmina.com", "user", "demo-pass-3"),
 ]
 ADMIN, AUTHOR, OTHER = TEST_USERS
 

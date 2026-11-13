@@ -59,10 +59,8 @@ const TABS: { id: SettingsTab; label: string; icon: React.ElementType; desc: str
 ];
 
 const ROLE_LABELS: Record<string, string> = {
-  admin:             'Software Engineering Manager / Admin',
-  'firmware-lead':   'Team Lead - SW Engineering',
-  'release-manager': 'Technical Lead - SW Engineering',
-  'qa-director':     'QA & Security Testing Lead',
+  admin: 'Administrator',
+  user:  'User',
 };
 
 /* ─── Small reusable sub-components ─── */

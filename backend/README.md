@@ -68,19 +68,27 @@ use an in-process fake Redis, so they need neither.
 ## Users (dev-only, temporary)
 
 There are no built-in accounts. Create one with the command-line tool, which asks
-for name, email, password, admin yes/no and (if not admin) a role
-(free text, not checked against a list):
+for name, email, password, admin yes/no, title and department (all required):
 
 ```
 cd backend && uv run python -m app.db.create_user                 # outside Docker, from backend/ (it reads backend/.env)
 docker compose run --rm migrate python -m app.db.create_user      # with docker-compose
 ```
 
+There are two roles: `admin` and `user` (the SRS only distinguishes those).
+Positions such as "firmware lead" are not roles; they go in the title. Only
+admins manage releases, data management and the audit views. Emails are stored
+lower-cased and must be unique.
+
 **The password is stored as typed, not hashed** (migration `0002`). This is a
 stand-in until the real user directory is connected, which will check
 passwords itself (single sign-on) or replace this table. Never put real people
-in it. An admin gets the role `admin`. Emails are stored lower-cased and must
-be unique.
+in it.
+
+**Documents belong to a user id** (`documents.owner_id`), not to a name. A
+non-admin edits only what they own; an admin edits anything. A document whose
+author could not be matched to exactly one user has no owner and is admin-only
+until an admin assigns one by saving it with that user's name as the author.
 
 ## Tests
 

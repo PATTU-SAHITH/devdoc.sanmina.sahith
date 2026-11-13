@@ -82,7 +82,7 @@ def build_services(settings: Settings, repos: Repositories, http_client: httpx.A
         auth=AuthService(repos),
         session_audit=repos.session_audit,
         collections=CollectionService(CollectionStore(redis)),
-        documents=DocumentService(documents, DocumentHistoryStore(redis)),
+        documents=DocumentService(documents, DocumentHistoryStore(redis), repos.users),
         admin=AdminService(documents, redis, repos.session_audit),
         ai=AiService(settings, http_client),
         test_management=TestManagementService(test_store),

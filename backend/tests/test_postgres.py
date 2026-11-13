@@ -37,14 +37,23 @@ def alembic_config(url: str) -> Config:
 
 
 def seed_users(url: str) -> None:
-    create_user(url, name="Manivannan Thangavel", email=ADMIN_EMAIL, password=ADMIN_PASSWORD, is_admin=True, role=None)
+    create_user(
+        url,
+        name="Manivannan Thangavel",
+        email=ADMIN_EMAIL,
+        password=ADMIN_PASSWORD,
+        is_admin=True,
+        title="Software engineering manager",
+        department="Platform Systems Engineering",
+    )
     create_user(
         url,
         name="Vaishnavi Aasaithambi",
         email=AUTHOR_EMAIL,
         password=AUTHOR_PASSWORD,
         is_admin=False,
-        role="release-manager",
+        title="Technical lead",
+        department="SW engineering",
     )
 
 
@@ -91,8 +100,8 @@ def test_login_me_logout_against_created_users(client: TestClient) -> None:
     assert user == {
         "name": "Manivannan Thangavel",
         "email": ADMIN_EMAIL,
-        "title": None,
-        "department": None,
+        "title": "Software engineering manager",
+        "department": "Platform Systems Engineering",
         "role": "admin",
         "avatarBg": "from-blue-600 to-indigo-600",
         "initials": "MT",
@@ -199,27 +208,128 @@ def test_create_user_rules() -> None:
         pytest.skip("TEST_DATABASE_URL not set")
     _wipe(DATABASE_URL)
     command.upgrade(alembic_config(DATABASE_URL), "head")
-    make = dict(name="Ada Lovelace", email="Ada@Example.com", password="pw", is_admin=False, role="qa-director")
+    make = dict(
+        name="Ada Lovelace",
+        email="Ada@Example.com",
+        password="pw",
+        is_admin=False,
+        title="Mathematician",
+        department="Analytical Engines",
+    )
     user_id = create_user(DATABASE_URL, **make)
     with psycopg.connect(DATABASE_URL) as conn:
-        row = conn.execute("SELECT email, role, initials, password FROM users WHERE id = %s", (user_id,)).fetchone()
-    assert row == ("ada@example.com", "qa-director", "AL", "pw")  # lower-cased email, stored as typed
+        row = conn.execute(
+            "SELECT email, role, initials, password, title, department FROM users WHERE id = %s", (user_id,)
+        ).fetchone()
+    # lower-cased email, stored as typed, role from the admin yes/no, title and department saved
+    assert row == ("ada@example.com", "user", "AL", "pw", "Mathematician", "Analytical Engines")
 
     with pytest.raises(UserInputError, match="already exists"):
         create_user(DATABASE_URL, **{**make, "email": "ADA@example.com"})  # any casing of the same email
-    with pytest.raises(UserInputError, match="Role is required"):
-        create_user(DATABASE_URL, **{**make, "email": "b@example.com", "role": "  "})
-    free = create_user(DATABASE_URL, **{**make, "email": "d@example.com", "role": "any-role-at-all"})
-    with psycopg.connect(DATABASE_URL) as conn:
-        assert conn.execute("SELECT role FROM users WHERE id = %s", (free,)).fetchone() == ("any-role-at-all",)
     with pytest.raises(UserInputError, match="valid email"):
         create_user(DATABASE_URL, **{**make, "email": "nope"})
-    with pytest.raises(UserInputError, match="Password is required"):
-        create_user(DATABASE_URL, **{**make, "email": "c@example.com", "password": ""})
+    for field, message in (("password", "Password"), ("title", "Title"), ("department", "Department")):
+        with pytest.raises(UserInputError, match=f"{message} is required"):
+            create_user(DATABASE_URL, **{**make, "email": "c@example.com", field: ""})
+    with pytest.raises(UserInputError, match="Title is required"):  # spaces alone are not a title
+        create_user(DATABASE_URL, **{**make, "email": "c@example.com", "title": "   "})
 
-    admin_id = create_user(DATABASE_URL, **{**make, "email": "root@example.com", "is_admin": True, "role": None})
+    admin_id = create_user(DATABASE_URL, **{**make, "email": "root@example.com", "is_admin": True})
     with psycopg.connect(DATABASE_URL) as conn:
         assert conn.execute("SELECT role FROM users WHERE id = %s", (admin_id,)).fetchone() == ("admin",)
+
+
+def test_the_database_itself_enforces_roles_and_a_required_profile() -> None:
+    if not DATABASE_URL:
+        pytest.skip("TEST_DATABASE_URL not set")
+    _wipe(DATABASE_URL)
+    command.upgrade(alembic_config(DATABASE_URL), "head")
+    insert = (
+        "INSERT INTO users (id, name, email, password, role, title, department) VALUES (%s, 'N', %s, 'p', %s, %s, %s)"
+    )
+    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
+        conn.execute(insert, ("u1", "u1@x.com", "user", "T", "D"))  # type: ignore[call-overload]
+        for args in (
+            ("u2", "u2@x.com", "firmware-lead", "T", "D"),  # not one of the two roles
+            ("u3", "u3@x.com", "Admin ", "T", "D"),  # a typo does not slip through
+            ("u4", "u4@x.com", "user", None, "D"),  # title required
+            ("u5", "u5@x.com", "user", "T", "  "),  # department required
+        ):
+            with pytest.raises(psycopg.errors.CheckViolation):
+                conn.execute(insert, args)  # type: ignore[call-overload]
+        conn.execute(
+            "INSERT INTO users (id, name, email, password, title, department) VALUES ('u6','N','u6@x.com','p','T','D')"
+        )
+        assert conn.execute("SELECT role FROM users WHERE id = 'u6'").fetchone() == ("user",)  # the default role
+
+
+def test_migration_0004_turns_positions_into_user_and_keeps_old_rows() -> None:
+    if not DATABASE_URL:
+        pytest.skip("TEST_DATABASE_URL not set")
+    _wipe(DATABASE_URL)
+    config = alembic_config(DATABASE_URL)
+    command.upgrade(config, "0003")
+    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
+        for uid, role in (("a", "admin"), ("b", "release-manager"), ("c", "firmware-lead"), ("d", "qa-director")):
+            conn.execute(  # no title or department: allowed before 0004
+                "INSERT INTO users (id, name, email, password, role) VALUES (%s, %s, %s, 'x', %s)",
+                (uid, uid, f"{uid}@x.com", role),
+            )
+    command.upgrade(config, "0004")
+    with psycopg.connect(DATABASE_URL) as conn:
+        roles = dict(conn.execute("SELECT id, role FROM users").fetchall())
+        assert roles == {"a": "admin", "b": "user", "c": "user", "d": "user"}
+        assert conn.execute("SELECT count(*) FROM users WHERE title IS NULL").fetchone() == (4,)  # not invented
+
+
+def test_migration_0005_assigns_an_owner_only_when_exactly_one_user_matches() -> None:
+    if not DATABASE_URL:
+        pytest.skip("TEST_DATABASE_URL not set")
+    _wipe(DATABASE_URL)
+    config = alembic_config(DATABASE_URL)
+    command.upgrade(config, "0004")
+    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
+        for uid, name in (("u1", "Ann Lee"), ("u2", "Bob Ray"), ("u3", "Bob Ray")):
+            conn.execute(
+                "INSERT INTO users (id, name, email, password, role, title, department)"
+                " VALUES (%s, %s, %s, 'p', 'user', 'T', 'D')",
+                (uid, name, f"{uid}@x.com"),
+            )
+        for doc_id, author in (("d1", " ann LEE"), ("d2", "Bob Ray"), ("d3", "Nobody"), ("d4", None)):
+            conn.execute(
+                "INSERT INTO documents (id, doc_number, title, author, document_json) VALUES (%s, 'n', 't', %s, '{}')",
+                (doc_id, author),
+            )
+    command.upgrade(config, "0005")
+    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
+        owners = dict(conn.execute("SELECT id, owner_id FROM documents").fetchall())
+        # one match (ignoring case and spaces) -> owner; two matches, none, or no author -> unowned
+        assert owners == {"d1": "u1", "d2": None, "d3": None, "d4": None}
+        with pytest.raises(psycopg.errors.ForeignKeyViolation):  # a user who owns documents cannot be deleted
+            conn.execute("DELETE FROM users WHERE id = 'u1'")
+    command.downgrade(config, "0004")
+    with psycopg.connect(DATABASE_URL) as conn:
+        assert conn.execute("SELECT count(*) FROM documents").fetchone() == (4,)
+
+
+def test_document_ownership_in_postgres(client: TestClient) -> None:
+    author = sign_in(client, AUTHOR_EMAIL)
+    admin = sign_in(client, ADMIN_EMAIL)
+    assert client.put("/api/documents/own-1", json=doc("own-1"), headers=author).status_code == 200
+    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:  # type: ignore[arg-type]
+        owner, author_id = conn.execute(
+            "SELECT d.owner_id, u.id FROM documents d, users u WHERE d.id = 'own-1' AND u.email = %s", (AUTHOR_EMAIL,)
+        ).fetchone()  # type: ignore[misc]
+        assert owner == author_id
+        conn.execute("UPDATE documents SET owner_id = NULL WHERE id = 'own-1'")  # an unmatched legacy document
+    assert client.put("/api/documents/own-1", json=doc("own-1", title="x"), headers=author).status_code == 403
+    assert client.put("/api/documents/own-1", json=doc("own-1", title="x"), headers=admin).status_code == 200
+    unknown = client.put("/api/documents/own-1", json=doc("own-1", author="Nobody"), headers=admin)
+    assert unknown.status_code == 400
+    reassigned = client.put("/api/documents/own-1", json=doc("own-1", author="vaishnavi aasaithambi"), headers=admin)
+    assert reassigned.status_code == 200
+    assert client.put("/api/documents/own-1", json=doc("own-1", title="mine"), headers=author).status_code == 200
+    assert client.get("/api/admin/backup", headers=admin).json()["documents"][0]["ownerId"] == author_id
 
 
 def test_session_audit_records_sign_ins_and_sign_outs(client: TestClient) -> None:
@@ -236,7 +346,7 @@ def test_session_audit_records_sign_ins_and_sign_outs(client: TestClient) -> Non
         ("Vaishnavi Aasaithambi", "signed-out"),
     ]
     assert sessions[0]["loginTime"].endswith("Z") and sessions[2]["logoutTime"].endswith("Z")
-    assert sessions[1]["role"] == "release-manager" and sessions[1]["logoutTime"] is None
+    assert sessions[1]["role"] == "user" and sessions[1]["logoutTime"] is None
     with psycopg.connect(DATABASE_URL) as conn:  # type: ignore[arg-type]
         stored = conn.execute("SELECT session_id_hash FROM session_audit").fetchall()
     assert all(len(h[0]) == 64 for h in stored)  # a sha256, never the session id itself

@@ -55,7 +55,7 @@ TRACKER_SYNC_USER = User("system", "Tracker sync", "", None, None, "system", Non
 
 
 def can_manage(user: User) -> bool:
-    return is_admin(user) or user.role == "release-manager"
+    return is_admin(user)
 
 
 def _require_manager(user: User) -> None:

@@ -21,6 +21,10 @@ def iso_z(moment: datetime) -> str:
 class UserRepository(Protocol):
     async def find_login_candidate(self, email_lower: str) -> LoginCandidate | None: ...
 
+    async def find_by_name(self, name: str) -> list[User]:
+        """Every user whose name equals `name`, ignoring case and surrounding spaces."""
+        ...
+
 
 class SessionRepository(Protocol):
     async def create(self, session_id: str, user_id: str, expires_at: datetime) -> None: ...

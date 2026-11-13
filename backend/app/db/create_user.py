@@ -2,19 +2,19 @@
 
     uv run python -m app.db.create_user
 
-Asks for name, email, password, whether the user is an admin and, if not,
-their role (free text). Every question can also be given as a flag (--name, --email,
---password, --admin / --no-admin, --role) for scripts.
+Asks for name, email, password, whether the user is an admin, title and
+department. Every question can also be given as a flag (--name, --email,
+--password, --admin / --no-admin, --title, --department) for scripts.
 
 DEV-ONLY: the password is stored as typed (see migration 0002). This is the
 stand-in until the real user directory is connected; do not use it for real
 people.
 
-An admin gets the role `admin`. For anyone else the role is whatever you type:
-it is not checked against a list.
-The email is stored lower-cased (login lower-cases what is typed) and must not
-already belong to another user. This only ever inserts: it never changes or
-replaces an existing user.
+There are two roles: an admin gets `admin`, everyone else `user`. Title and
+department are required (they are shown on the account; positions are not
+tracked as roles). The email is stored lower-cased (login lower-cases what is
+typed) and must not already belong to another user. This only ever inserts: it
+never changes or replaces an existing user.
 """
 
 import argparse
@@ -28,6 +28,7 @@ import psycopg
 from app.core.config import Settings
 
 ADMIN_ROLE = "admin"
+USER_ROLE = "user"
 
 
 class UserInputError(ValueError):
@@ -40,22 +41,24 @@ def initials(name: str) -> str:
     return letters.upper()
 
 
-def create_user(database_url: str, *, name: str, email: str, password: str, is_admin: bool, role: str | None) -> str:
+def create_user(
+    database_url: str, *, name: str, email: str, password: str, is_admin: bool, title: str, department: str
+) -> str:
     """Inserts the user and returns its id."""
     name = name.strip()
     email = email.strip().lower()
+    title = title.strip()
+    department = department.strip()
     if not name:
         raise UserInputError("Name is required.")
     if "@" not in email or email.startswith("@") or email.endswith("@"):
         raise UserInputError("Enter a valid email address.")
     if not password:
         raise UserInputError("Password is required.")
-    if is_admin:
-        role = ADMIN_ROLE
-    else:
-        role = (role or "").strip()
-        if not role:
-            raise UserInputError("Role is required for a user who is not an admin.")
+    if not title:
+        raise UserInputError("Title is required.")
+    if not department:
+        raise UserInputError("Department is required.")
 
     user_id = f"usr-{secrets.token_hex(4)}"
     with psycopg.connect(database_url, autocommit=True) as conn:
@@ -63,8 +66,9 @@ def create_user(database_url: str, *, name: str, email: str, password: str, is_a
         if conn.execute("SELECT 1 FROM users WHERE lower(email) = %s", (email,)).fetchone():
             raise UserInputError(f"A user with the email {email} already exists.")
         conn.execute(
-            "INSERT INTO users (id, name, email, password, role, initials) VALUES (%s, %s, %s, %s, %s, %s)",
-            (user_id, name, email, password, role, initials(name)),
+            """INSERT INTO users (id, name, email, password, role, title, department, initials)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+            (user_id, name, email, password, ADMIN_ROLE if is_admin else USER_ROLE, title, department, initials(name)),
         )
     return user_id
 
@@ -92,7 +96,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--password")
     parser.add_argument("--admin", dest="admin", action="store_true", default=None)
     parser.add_argument("--no-admin", dest="admin", action="store_false")
-    parser.add_argument("--role", help="Free text. Ignored for an admin.")
+    parser.add_argument("--title")
+    parser.add_argument("--department")
     args = parser.parse_args(argv)
 
     url = os.environ.get("ALEMBIC_DATABASE_URL") or Settings().database_url
@@ -103,15 +108,16 @@ def main(argv: list[str] | None = None) -> None:
     email = _ask("Email: ", args.email)
     password = args.password if args.password is not None else getpass.getpass("Password: ")
     is_admin = _ask_admin(args.admin)
-    role = args.role
-    if not is_admin and role is None:
-        role = input("Role: ")
+    title = _ask("Title: ", args.title)
+    department = _ask("Department: ", args.department)
 
     try:
-        user_id = create_user(url, name=name, email=email, password=password, is_admin=is_admin, role=role)
+        user_id = create_user(
+            url, name=name, email=email, password=password, is_admin=is_admin, title=title, department=department
+        )
     except UserInputError as error:
         sys.exit(f"Not created: {error}")
-    print(f"Created {email.strip().lower()} ({ADMIN_ROLE if is_admin else role}), id {user_id}.")
+    print(f"Created {email.strip().lower()} ({ADMIN_ROLE if is_admin else USER_ROLE}), id {user_id}.")
 
 
 if __name__ == "__main__":

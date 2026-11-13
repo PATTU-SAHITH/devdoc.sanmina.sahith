@@ -1,10 +1,11 @@
 import { test, expect, signInAs } from './fixtures';
 
 // Release management (DDS-SRS-033 - 046) against the real API.
-const MANAGER = 'Vaishnavi Aasaithambi';
+// Only admins manage releases, so the admin persona runs the whole flow and signs every role.
+const MANAGER = 'Manivannan Thangavel';
 
-test('a release manager takes an RC from registration to Final, and every step is audited', async ({ page }) => {
-  await signInAs(page, 'release-manager');
+test('an admin takes an RC from registration to Final, and every step is audited', async ({ page }) => {
+  await signInAs(page, 'admin');
   await page.goto('/');
   // Opening Test Management first loads its sample runs on this fresh server.
   await page.getByRole('button', { name: 'Test Management', exact: true }).click();

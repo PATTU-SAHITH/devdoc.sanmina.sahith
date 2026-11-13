@@ -12,7 +12,7 @@ import pytest
 import respx
 
 from app.services.trackers import github_severity, jira_severity
-from tests.conftest import ADMIN, AUTHOR, OTHER, Agent, Api, make_api, test_settings
+from tests.conftest import ADMIN, OTHER, Agent, Api, make_api, test_settings
 
 KEY = base64.b64encode(os.urandom(32)).decode()
 JIRA = "https://acme.atlassian.net"
@@ -134,7 +134,7 @@ def test_check_signs_in(keyed_api: Api, http: respx.MockRouter) -> None:
 def test_lookup_by_key_reads_the_issue(keyed_api: Api, http: respx.MockRouter) -> None:
     admin = keyed_api.sign_in(ADMIN)
     connect(admin)
-    manager = keyed_api.sign_in(AUTHOR)
+    manager = keyed_api.sign_in(ADMIN)
     make_release(manager)
     http.get(f"{JIRA}/rest/api/3/issue/WH3-1310").mock(
         return_value=httpx.Response(200, json=jira_issue("WH3-1310", "Telemetry timeout", "Highest"))
@@ -169,7 +169,7 @@ def test_lookup_by_key_reads_the_issue(keyed_api: Api, http: respx.MockRouter) -
 def test_sync_imports_matching_issues_and_feeds_the_gate(keyed_api: Api, http: respx.MockRouter) -> None:
     admin = keyed_api.sign_in(ADMIN)
     connect(admin)
-    manager = keyed_api.sign_in(AUTHOR)
+    manager = keyed_api.sign_in(ADMIN)
     jql = 'fixVersion = "v2.4.0" AND labels = release-blocker'
     make_release(manager, {"jira": {"jql": jql}, "github": {"repo": "acme/fw"}})
     search = http.post(f"{JIRA}/rest/api/3/search/jql").mock(
