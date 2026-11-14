@@ -1,7 +1,6 @@
 export type AppView =
   | 'login'
   | 'dashboard'
-  | 'hub'
   | 'doccraft'
   | 'operations'
   | 'coder'

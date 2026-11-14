@@ -42,7 +42,6 @@ import {
 // Heavy screens load on demand so the login/document screens ship a much
 // smaller first bundle.
 const DashboardPage = lazy(() => import('./components/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })));
-const LandingHub = lazy(() => import('./components/hub/LandingHub').then((m) => ({ default: m.LandingHub })));
 const OperationsLayout = lazy(() => import('./components/operations/OperationsLayout').then((m) => ({ default: m.OperationsLayout })));
 const SettingsPage = lazy(() => import('./components/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 const CoderView = lazy(() => import('./components/coder/CoderView').then((m) => ({ default: m.CoderView })));
@@ -574,19 +573,6 @@ export const App: React.FC = () => {
           onLogout={handleLogout}
           onOpenDocuments={handleOpenDocumentsByStatus}
           onOpenDocument={handleOpenDocumentFromDashboard}
-        />
-      </Suspense>
-    );
-  }
-
-  // 3. Render Landing Hub Screen (legacy)
-  if (currentApp === 'hub') {
-    return (
-      <Suspense fallback={<PageLoading />}>
-        <LandingHub
-          user={currentUser}
-          onLaunchApp={handleLaunchApp}
-          onLogout={handleLogout}
         />
       </Suspense>
     );
