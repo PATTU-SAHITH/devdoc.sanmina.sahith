@@ -23,7 +23,7 @@ app/
   schemas/         Pydantic models describing the wire contract for /openapi.json
   db/              connection pool, node-postgres-compatible parameter coercion
 migrations/        Alembic schema migrations (`uv run alembic upgrade head`); docker-compose's `migrate` service runs them
-tests/             pytest suite; parity/ compares against the old Node API
+tests/             pytest suite
 ```
 
 ## Endpoints

@@ -32,7 +32,6 @@ dev = [
 testpaths = ["tests"]
 markers = [
     "postgres: needs a real Postgres at TEST_DATABASE_URL (skipped otherwise)",
-    "parity: compares a running Node API with a running FastAPI (skipped unless both URLs are set)",
 ]
 
 [tool.ruff]

@@ -42,6 +42,38 @@ describe('canEditDocument (#2 / #4)', () => {
   });
 });
 
+describe('canEditDocument by owner id (the server decides by id, so the UI must too)', () => {
+  const ada = makeUser({ id: 'usr-ada', name: 'Ada Author', role: 'user' });
+  const twin = makeUser({ id: 'usr-twin', name: 'Ada Author', role: 'user' }); // same name, different person
+  const doc = makeDoc('d1', { author: 'Ada Author' });
+
+  it('lets the owner edit, and refuses a different person who has the same name', () => {
+    expect(canEditDocument(ada, doc, 'usr-ada')).toBe(true);
+    expect(canEditDocument(twin, doc, 'usr-ada')).toBe(false);
+  });
+  it('lets a renamed owner keep editing: the id matches even though the author name does not', () => {
+    expect(canEditDocument(makeUser({ id: 'usr-ada', name: 'Ada Renamed' }), doc, 'usr-ada')).toBe(true);
+  });
+  it('treats a document with no owner as admin-only, even for the person named as author', () => {
+    expect(canEditDocument(ada, doc, null)).toBe(false);
+    expect(canEditDocument(admin, doc, null)).toBe(true);
+  });
+  it('always lets an admin edit, whoever the owner is', () => {
+    expect(canEditDocument(admin, doc, 'usr-ada')).toBe(true);
+  });
+  it('falls back to the author name only when no owner is known (browser demo, a document just created here)', () => {
+    expect(canEditDocument(ada, doc, undefined)).toBe(true);
+    expect(canEditDocument(other, doc, undefined)).toBe(false);
+  });
+  it('delete follows exactly the same rule', () => {
+    for (const u of [admin, ada, twin, null]) {
+      for (const owner of ['usr-ada', null, undefined]) {
+        expect(canDeleteDocument(u, doc, owner)).toBe(canEditDocument(u, doc, owner));
+      }
+    }
+  });
+});
+
 describe('canAccessDataManagement (#8)', () => {
   it('is admin-only', () => {
     expect(canAccessDataManagement(admin)).toBe(true);

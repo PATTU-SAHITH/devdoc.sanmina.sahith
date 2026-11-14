@@ -31,7 +31,7 @@ backend/             Python 3.12 + FastAPI, managed with uv
     models/          domain records
     schemas/         request/response models (the API contract)
     core/ db/        config, HTTP plumbing, connection pool
-  migrations/        Alembic schema migrations (alembic.ini); sql/legacy_init.sql is the retired init.sql
+  migrations/        Alembic schema migrations (alembic.ini)
   tests/             pytest
 sandbox/             VS Code + Robot Framework container (the Coder screen)
 docs/                API contract, migration report, reference documents

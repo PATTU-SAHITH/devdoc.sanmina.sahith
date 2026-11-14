@@ -22,6 +22,8 @@ def _with_updated_at(record: DocumentRecord) -> dict[str, Any]:
     # updatedAt lets the client tell a document it already has apart from
     # one that changed on the server since (syncFromBackend on the frontend).
     document = js_spread(record.document_json)
+    # Who may edit it, so the UI can decide by user id the way the server does. Never stored in the document.
+    document["ownerId"] = record.owner_id
     document["updatedAt"] = js_iso_date(record.updated_at)
     return document
 

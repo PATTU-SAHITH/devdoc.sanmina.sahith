@@ -106,3 +106,33 @@ class TestRestore:
         assert admin.post(f"/api/documents/d1/history/{snapshot['id']}/restore").status_code == 200
         assert owner_of(api, "d1") == OTHER.id
         assert api.store.documents["d1"].write.author == OTHER.name
+
+
+class TestOwnerIdIsExposedToTheUi:
+    """So the browser can decide who may edit by user id, the same way the server does."""
+
+    def test_get_and_list_carry_the_owner_id(self, api: Api) -> None:
+        author = api.sign_in(AUTHOR)
+        author.put("/api/documents/d1", json=doc("d1"))
+        assert author.get("/api/documents/d1").json()["document"]["ownerId"] == AUTHOR.id
+        assert [d["ownerId"] for d in author.get("/api/documents").json()["documents"]] == [AUTHOR.id]
+
+    def test_a_document_with_no_owner_says_null(self, api: Api) -> None:
+        author = api.sign_in(AUTHOR)
+        author.put("/api/documents/d1", json=doc("d1"))
+        stored = api.store.documents["d1"]
+        stored.write = replace(stored.write, owner_id=None)
+        assert author.get("/api/documents/d1").json()["document"]["ownerId"] is None
+
+    def test_a_reassigned_document_shows_its_new_owner(self, api: Api) -> None:
+        api.sign_in(AUTHOR).put("/api/documents/d1", json=doc("d1"))
+        api.sign_in(ADMIN).put("/api/documents/d1", json=doc("d1", author=OTHER.name))
+        assert api.sign_in(OTHER).get("/api/documents/d1").json()["document"]["ownerId"] == OTHER.id
+
+    def test_the_saved_document_is_never_stored_with_an_owner_id_inside_it(self, api: Api) -> None:
+        body = doc("d1")
+        body["ownerId"] = "usr-someone-else"  # a client echoing back what it read, or forging it
+        res = api.sign_in(AUTHOR).put("/api/documents/d1", json=body)
+        assert "ownerId" not in res.json()["document"]  # PUT echoes the saved model as before
+        assert "ownerId" not in api.store.documents["d1"].write.document_json
+        assert owner_of(api, "d1") == AUTHOR.id

@@ -23,6 +23,7 @@ pytestmark = pytest.mark.postgres
 
 DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
 BACKEND_DIR = Path(__file__).resolve().parents[1]
+LEGACY_SCHEMA = BACKEND_DIR / "tests" / "fixtures" / "legacy_schema.sql"
 ADMIN_PASSWORD = "admin-pass"
 AUTHOR_PASSWORD = "author-pass"
 ADMIN_EMAIL = "mani.thangavel@sanmina.com"
@@ -175,32 +176,96 @@ def test_migrations_upgrade_and_downgrade_cleanly() -> None:
     assert {"users", "sessions", "documents", "session_audit"} <= _tables(DATABASE_URL)
 
 
+UNUSED_LEGACY_TABLES = {
+    "incidents",
+    "release_master",
+    "reviewers_log",
+    "gantt_tasks",
+    "test_suites",
+    "test_cases",
+    "test_runs",
+}
+CURRENT_TABLES = {"users", "sessions", "documents", "session_audit", "alembic_version"}
+
+
+def _build_legacy_database(url: str) -> None:
+    """A database as the old docker-compose built it (init.sql), holding one user and one document."""
+    _wipe(url)
+    with psycopg.connect(url, autocommit=True) as conn:
+        conn.execute(LEGACY_SCHEMA.read_text())
+        conn.execute(
+            "INSERT INTO users (id, name, email, password_hash, role)"
+            " VALUES ('legacy-1', 'Legacy Person', 'legacy@x.com', 'hash', 'firmware-lead')"
+        )
+        conn.execute(
+            "INSERT INTO documents (id, doc_number, title, author, document_json)"
+            " VALUES ('legacy-doc', 'N-1', 'Old report', 'Legacy Person', '{}')"
+        )
+
+
+def _assert_legacy_data_carried_through(url: str) -> None:
+    with psycopg.connect(url) as conn:
+        assert conn.execute("SELECT name, email, role, password FROM users").fetchall() == [
+            ("Legacy Person", "legacy@x.com", "user", "hash")  # position became `user`; the old value is kept as is
+        ]
+        assert conn.execute("SELECT title, author, owner_id FROM documents").fetchall() == [
+            ("Old report", "Legacy Person", "legacy-1")  # and the document got its owner
+        ]
+
+
 def test_a_database_built_by_the_old_init_sql_can_be_stamped() -> None:
     """The adoption path: a volume init.sql already built is marked as being at
     the baseline, and later migrations then apply on top of it."""
     if not DATABASE_URL:
         pytest.skip("TEST_DATABASE_URL not set")
-    _wipe(DATABASE_URL)
-    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
-        conn.execute((BACKEND_DIR / "sql" / "legacy_init.sql").read_text())
+    _build_legacy_database(DATABASE_URL)
     config = alembic_config(DATABASE_URL)
     command.stamp(config, "0001")
-    command.upgrade(config, "head")  # nothing to do, and must not try to recreate tables
-    assert {"users", "sessions", "documents", "alembic_version"} <= _tables(DATABASE_URL)
+    command.upgrade(config, "head")  # must not try to recreate the baseline tables
+    assert _tables(DATABASE_URL) == CURRENT_TABLES
+    _assert_legacy_data_carried_through(DATABASE_URL)
 
 
 def test_a_database_built_by_the_old_init_sql_upgrades_without_a_stamp() -> None:
     """What `docker compose up` does on an existing volume."""
     if not DATABASE_URL:
         pytest.skip("TEST_DATABASE_URL not set")
-    _wipe(DATABASE_URL)
-    with psycopg.connect(DATABASE_URL, autocommit=True) as conn:
-        conn.execute((BACKEND_DIR / "sql" / "legacy_init.sql").read_text())
-        before = conn.execute("SELECT count(*) FROM users").fetchone()
+    _build_legacy_database(DATABASE_URL)
     command.upgrade(alembic_config(DATABASE_URL), "head")
-    with psycopg.connect(DATABASE_URL) as conn:
-        assert conn.execute("SELECT count(*) FROM users").fetchone() == before  # data untouched
-    assert "alembic_version" in _tables(DATABASE_URL)
+    assert _tables(DATABASE_URL) == CURRENT_TABLES
+    _assert_legacy_data_carried_through(DATABASE_URL)
+
+
+def test_migration_0006_drops_exactly_the_seven_unused_legacy_tables() -> None:
+    if not DATABASE_URL:
+        pytest.skip("TEST_DATABASE_URL not set")
+    _build_legacy_database(DATABASE_URL)
+    config = alembic_config(DATABASE_URL)
+    command.upgrade(config, "0005")
+    assert UNUSED_LEGACY_TABLES <= _tables(DATABASE_URL)  # still there before 0006
+    command.upgrade(config, "0006")
+    assert _tables(DATABASE_URL) == CURRENT_TABLES
+
+
+def test_migration_0006_changes_nothing_on_a_fresh_database() -> None:
+    if not DATABASE_URL:
+        pytest.skip("TEST_DATABASE_URL not set")
+    _wipe(DATABASE_URL)
+    config = alembic_config(DATABASE_URL)
+    command.upgrade(config, "0005")
+    before = _tables(DATABASE_URL)
+    command.upgrade(config, "0006")
+    assert _tables(DATABASE_URL) == before == CURRENT_TABLES
+
+
+def test_migration_0006_downgrade_runs_and_does_not_bring_the_tables_back() -> None:
+    if not DATABASE_URL:
+        pytest.skip("TEST_DATABASE_URL not set")
+    _build_legacy_database(DATABASE_URL)
+    config = alembic_config(DATABASE_URL)
+    command.upgrade(config, "head")
+    command.downgrade(config, "0005")
+    assert _tables(DATABASE_URL) == CURRENT_TABLES  # the sample data they held is gone for good
 
 
 def test_create_user_rules() -> None:

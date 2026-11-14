@@ -15,6 +15,10 @@ department are required (they are shown on the account; positions are not
 tracked as roles). The email is stored lower-cased (login lower-cases what is
 typed) and must not already belong to another user. This only ever inserts: it
 never changes or replaces an existing user.
+
+The password prompt is hidden, so it is asked twice (up to three tries), and a
+password containing a control character is refused. A stray arrow or escape
+key press at a hidden prompt otherwise ends up inside the password unseen.
 """
 
 import argparse
@@ -31,8 +35,22 @@ ADMIN_ROLE = "admin"
 USER_ROLE = "user"
 
 
+PASSWORD_ATTEMPTS = 3
+
+
 class UserInputError(ValueError):
     """The details given cannot make a user; the message says why."""
+
+
+def check_password(password: str) -> None:
+    """Spaces and any printable character are fine; control characters (an
+    escape from an arrow key, a tab, a newline) are not."""
+    if not password:
+        raise UserInputError("Password is required.")
+    if not password.isprintable():
+        raise UserInputError(
+            "The password contains a control character (for example from an arrow key). Type it again."
+        )
 
 
 def initials(name: str) -> str:
@@ -53,8 +71,7 @@ def create_user(
         raise UserInputError("Name is required.")
     if "@" not in email or email.startswith("@") or email.endswith("@"):
         raise UserInputError("Enter a valid email address.")
-    if not password:
-        raise UserInputError("Password is required.")
+    check_password(password)
     if not title:
         raise UserInputError("Title is required.")
     if not department:
@@ -75,6 +92,20 @@ def create_user(
 
 def _ask(prompt: str, given: str | None) -> str:
     return given if given is not None else input(prompt)
+
+
+def _ask_password() -> str:
+    for _ in range(PASSWORD_ATTEMPTS):
+        first = getpass.getpass("Password: ")
+        try:
+            check_password(first)
+        except UserInputError as error:
+            print(error)
+            continue
+        if getpass.getpass("Password again: ") == first:
+            return first
+        print("The two passwords do not match. Try again.")
+    sys.exit("Not created: the passwords do not match.")
 
 
 def _ask_admin(given: bool | None) -> bool:
@@ -106,7 +137,7 @@ def main(argv: list[str] | None = None) -> None:
 
     name = _ask("Name: ", args.name)
     email = _ask("Email: ", args.email)
-    password = args.password if args.password is not None else getpass.getpass("Password: ")
+    password = args.password if args.password is not None else _ask_password()
     is_admin = _ask_admin(args.admin)
     title = _ask("Title: ", args.title)
     department = _ask("Department: ", args.department)

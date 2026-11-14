@@ -2,7 +2,9 @@
 
 The frozen HTTP contract of the DevDoc Studio backend. It was written down
 from the original Node/Express API and verified against it request by request
-(`backend/tests/parity/`). The FastAPI backend must keep every point here.
+(a parity suite, removed after the cutover: see `migration-report.md`). The
+FastAPI backend must keep every point here; `backend/tests/test_express_contract.py`
+and the route tests guard it now.
 
 ## Conventions
 

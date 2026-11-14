@@ -16,7 +16,7 @@ import { LoginPage } from './components/auth/LoginPage';
 import { AppSidebar } from './components/AppSidebar';
 import { DocumentsListPage } from './components/documents/DocumentsListPage';
 import {
-  listDocuments, getDocument, saveDocument, generateDocumentId, moveDocumentToBin, moveSectionToBin,
+  listDocuments, getDocument, getDocumentOwnerId, saveDocument, generateDocumentId, moveDocumentToBin, moveSectionToBin,
   loadDocuments, resetDocuments, restoreSnapshot, useDocuments, DOCUMENT_SAVE_ERROR_EVENT,
 } from './services/documentsStoreService';
 import { DocBinModal } from './components/documents/DocBinModal';
@@ -233,7 +233,7 @@ export const App: React.FC = () => {
     const doc = getDocument(id);
     if (!doc) return;
     // Same rule as editing (#2/#4): only the author or an admin may delete.
-    if (!canDeleteDocument(currentUser, doc)) {
+    if (!canDeleteDocument(currentUser, doc, getDocumentOwnerId(id))) {
       showToast('You can only delete documents you authored.');
       return;
     }
@@ -390,7 +390,8 @@ export const App: React.FC = () => {
   // Requirement #2/#4: a user may only edit documents they authored;
   // admins may edit any document. Guarding here (not just visually)
   // means the restriction holds regardless of which UI path is used.
-  const canEditActiveDocument = (): boolean => canEditDocument(currentUser, document);
+  const canEditActiveDocument = (): boolean =>
+    canEditDocument(currentUser, document, getDocumentOwnerId(document.metadata.id));
 
   const handleUpdateMetadata = (updates: Partial<DocumentModel['metadata']>) => {
     if (!canEditActiveDocument()) { showToast('Read-only: you can only edit documents you authored.'); return; }
