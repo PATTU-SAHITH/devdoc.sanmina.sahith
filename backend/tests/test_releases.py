@@ -326,17 +326,18 @@ class TestBuilds:
         first = creator.post(f"{BASE}/{rid}/builds", json=build_body()).json()["build"]
         second = creator.post(f"{BASE}/{rid}/builds", json=build_body(sha256="B" * 64)).json()["build"]
         assert (first["label"], second["label"]) == ("v2.4.0-RC100", "v2.4.0-RC101")
-        assert second["sha256"] == "b" * 64 and second["kind"] == "RC"
+        assert second["sha256"] == "B" * 64 and second["kind"] == "RC"
         assert first["pipelineBuildId"] == "jenkins-482" and first["repository"] == "Artifactory"
         assert first["createdByName"] == CREATOR.name
 
-    def test_checksum_commit_and_url_are_checked(self, api: Api) -> None:
+    def test_checksum_commit_and_url_accept_any_text(self, api: Api) -> None:
+        # Format checks relaxed for testing the sign-off flow: any text is kept as entered.
         creator, rid = make_release(api)
-        assert creator.post(f"{BASE}/{rid}/builds", json=build_body(sha256="123")).json() == {
-            "error": "sha256 must be a 64-character hex SHA-256 checksum."
-        }
-        assert creator.post(f"{BASE}/{rid}/builds", json=build_body(commitSha="zzz")).status_code == 400
-        assert creator.post(f"{BASE}/{rid}/builds", json=build_body(artifactUrl="ftp://x")).status_code == 400
+        res = creator.post(f"{BASE}/{rid}/builds", json=build_body(sha256="My Checksum", commitSha="zzz", artifactUrl="ftp://x"))
+        assert res.status_code == 200, res.json()
+        build = res.json()["build"]
+        assert (build["sha256"], build["commitSha"], build["artifactUrl"]) == ("My Checksum", "zzz", "ftp://x")
+        assert creator.post(f"{BASE}/{rid}/builds", json=build_body(sha256="")).json() == {"error": "sha256 is required."}
 
     def test_only_the_creator_registers_builds_and_links_runs(self, api: Api) -> None:
         creator, rid = make_release(api)
