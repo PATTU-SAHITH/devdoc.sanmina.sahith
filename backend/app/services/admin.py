@@ -10,14 +10,15 @@ from redis.asyncio import Redis
 from app.core.errors import ApiError
 from app.models.user import User
 from app.repositories.base import DocumentRepository, SessionAuditRepository
+from app.repositories.releases import ReleaseRepository
 from app.services.permissions import is_admin
 
 BACKUP_FORMAT = "devdoc-studio-backup-v1"
 RESET_CONFIRMATION = "DELETE ALL DATA"
 # Kept by a reset: audit logs are security records, and must not be erasable
 # by the people they record. The session audit log, users and sessions live in
-# Postgres and are untouched by a reset (so the admin stays signed in); what
-# is kept in Redis is the release audit log.
+# Postgres and are untouched by a reset (so the admin stays signed in); so are
+# releases with their builds and audit log (they are cancelled, never deleted).
 _KEPT_BY_RESET = ("dds:audit:",)
 
 
@@ -44,16 +45,24 @@ async def _dump_key(redis: Redis, key: str) -> dict[str, Any]:
 
 
 class AdminService:
-    def __init__(self, documents: DocumentRepository, redis: Redis, session_audit: SessionAuditRepository) -> None:
+    def __init__(
+        self,
+        documents: DocumentRepository,
+        redis: Redis,
+        session_audit: SessionAuditRepository,
+        releases: ReleaseRepository,
+    ) -> None:
         self._documents = documents
         self._redis = redis
         self._session_audit = session_audit
+        self._releases = releases
 
     async def backup(self, user: User) -> dict[str, Any]:
         """Every document (deleted ones too) and every app key in Redis -
         test management, libraries, logs, Doc Bin and version history - plus
-        the session audit log, which lives in Postgres (`sessionAudit`). The
-        read cache is left out."""
+        the session audit log (`sessionAudit`) and the releases with their builds,
+        blockers and audit logs (`releases`), which live in Postgres. The read
+        cache is left out."""
         _require_admin(user)
         keys = sorted([k async for k in self._redis.scan_iter(match="dds:*") if not k.startswith("dds:cache:")])
         return {
@@ -62,6 +71,7 @@ class AdminService:
             "exportedBy": user.name,
             "documents": await self._documents.export_all(),
             "sessionAudit": await self._session_audit.export_all(),
+            "releases": await self._releases.export_all(),
             "redis": {k: await _dump_key(self._redis, k) for k in keys},
         }
 

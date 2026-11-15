@@ -43,3 +43,5 @@ select = ["E", "F", "I", "UP", "B", "ASYNC", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["E501"]
+# Imports test_postgres.py's `client` fixture, which each test then takes by name.
+"tests/test_postgres_releases.py" = ["F811"]

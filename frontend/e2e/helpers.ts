@@ -25,3 +25,9 @@ export async function signInAs(page: Page, role: Role = 'admin'): Promise<void> 
     localStorage.setItem('devdoc_studio_welcome_seen_v1', '1');
   }, [u, role] as const);
 }
+
+/** Settings → System & Storage (there is no separate sidebar entry for it). */
+export async function openSystemAndStorage(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await page.getByRole('button', { name: /System & Storage/i }).click();
+}

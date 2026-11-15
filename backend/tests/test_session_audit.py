@@ -1,4 +1,5 @@
-"""DDS-SRS-011: the server records every sign-in; only admins can read it."""
+"""DDS-SRS-011: the server records every sign-in. Admins read everyone's;
+everyone else reads only their own."""
 
 from datetime import UTC, datetime, timedelta
 
@@ -8,11 +9,29 @@ from tests.conftest import ADMIN, AUTHOR, OTHER, Api
 URL = "/api/audit/sessions"
 
 
-def test_needs_a_session_and_an_admin(api: Api) -> None:
+def test_needs_a_session(api: Api) -> None:
     assert api.anonymous().get(URL).status_code == 401
-    res = api.sign_in(AUTHOR).get(URL)
-    assert res.status_code == 403
-    assert res.json() == {"error": "Only admins can view the session audit log."}
+
+
+def test_a_non_admin_sees_only_their_own_sign_ins(api: Api) -> None:
+    first = api.sign_in(AUTHOR)
+    api.sign_in(OTHER)
+    api.sign_in(ADMIN)
+    assert first.post("/api/auth/logout").status_code == 204
+    author = api.sign_in(AUTHOR)
+
+    res = author.get(URL)
+    assert res.status_code == 200
+    sessions = res.json()["sessions"]
+    assert [(s["userName"], s["status"]) for s in sessions] == [(AUTHOR.name, "active"), (AUTHOR.name, "signed-out")]
+    assert {s["userId"] for s in sessions} == {AUTHOR.id}
+
+
+def test_an_admin_still_sees_everyone(api: Api) -> None:
+    api.sign_in(AUTHOR)
+    api.sign_in(OTHER)
+    names = [s["userName"] for s in api.sign_in(ADMIN).get(URL).json()["sessions"]]
+    assert names == [ADMIN.name, OTHER.name, AUTHOR.name]
 
 
 def test_logins_and_logouts_are_recorded_newest_first(api: Api) -> None:

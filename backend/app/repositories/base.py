@@ -11,6 +11,7 @@ from typing import Any, Protocol
 
 from app.models.document import DocumentRecord, DocumentWrite
 from app.models.user import LoginCandidate, User
+from app.repositories.releases import ReleaseRepository
 
 
 def iso_z(moment: datetime) -> str:
@@ -23,6 +24,16 @@ class UserRepository(Protocol):
 
     async def find_by_name(self, name: str) -> list[User]:
         """Every user whose name equals `name`, ignoring case and surrounding spaces."""
+        ...
+
+    async def find_by_ids(self, user_ids: list[str]) -> list[User]:
+        """The users that exist among `user_ids` (unknown ids are left out)."""
+        ...
+
+    async def search(self, query: str, limit: int) -> list[User]:
+        """Users whose name, title or department contains `query` (ignoring case
+        and surrounding spaces; `%` and `_` are plain text), by name, at most
+        `limit`. An empty query matches everyone."""
         ...
 
 
@@ -44,9 +55,10 @@ class SessionAuditRepository(Protocol):
         unknown, already signed out, or had already expired."""
         ...
 
-    async def recent(self, limit: int = 200) -> list[dict[str, Any]]:
+    async def recent(self, limit: int = 200, user_id: str | None = None) -> list[dict[str, Any]]:
         """Newest sign-in first: id, userId, userName, role, loginTime,
-        logoutTime, expiresAt (ISO strings)."""
+        logoutTime, expiresAt (ISO strings). With `user_id`, only that
+        user's sign-ins."""
         ...
 
     async def export_all(self) -> list[dict[str, Any]]:
@@ -87,3 +99,4 @@ class Repositories:
     sessions: SessionRepository
     documents: DocumentRepository
     session_audit: SessionAuditRepository
+    releases: ReleaseRepository

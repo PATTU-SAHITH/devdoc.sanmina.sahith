@@ -10,6 +10,7 @@ from psycopg_pool import AsyncConnectionPool
 from app.models.document import DocumentRecord, DocumentWrite
 from app.models.user import LoginCandidate, User
 from app.repositories.base import Repositories, iso_z
+from app.repositories.releases_postgres import PgReleaseRepository
 
 _DOC_COLUMNS = "id, author, owner_id, status, document_json, updated_at"
 
@@ -34,6 +35,25 @@ class PgUserRepository(_PgRepository):
             """SELECT id, name, email, title, department, role, avatar_bg, initials
                  FROM users WHERE lower(btrim(name)) = lower(btrim(%s)) ORDER BY id""",
             (name,),
+        )
+        return [User(**r) for r in rows]
+
+    async def find_by_ids(self, user_ids: list[str]) -> list[User]:
+        rows = await self._fetch(
+            """SELECT id, name, email, title, department, role, avatar_bg, initials
+                 FROM users WHERE id = ANY(%s) ORDER BY id""",
+            (list(dict.fromkeys(user_ids)),),
+        )
+        return [User(**r) for r in rows]
+
+    async def search(self, query: str, limit: int) -> list[User]:
+        like = "%" + query.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        rows = await self._fetch(
+            """SELECT id, name, email, title, department, role, avatar_bg, initials
+                 FROM users
+                WHERE name ILIKE %(q)s OR coalesce(title, '') ILIKE %(q)s OR coalesce(department, '') ILIKE %(q)s
+                ORDER BY lower(name), id LIMIT %(n)s""",
+            {"q": like, "n": limit},
         )
         return [User(**r) for r in rows]
 
@@ -73,11 +93,14 @@ class PgSessionAuditRepository(_PgRepository):
             (logout_at, _session_hash(session_id), logout_at),
         )
 
-    async def recent(self, limit: int = 200) -> list[dict[str, Any]]:
-        rows = await self._fetch(
-            f"{_AUDIT_SELECT} ORDER BY login_at DESC, seq DESC LIMIT %s",
-            (limit,),
-        )
+    async def recent(self, limit: int = 200, user_id: str | None = None) -> list[dict[str, Any]]:
+        if user_id is None:
+            rows = await self._fetch(f"{_AUDIT_SELECT} ORDER BY login_at DESC, seq DESC LIMIT %s", (limit,))
+        else:
+            rows = await self._fetch(
+                f"{_AUDIT_SELECT} WHERE user_id = %s ORDER BY login_at DESC, seq DESC LIMIT %s",
+                (user_id, limit),
+            )
         return [_audit_entry(r) for r in rows]
 
     async def export_all(self) -> list[dict[str, Any]]:
@@ -184,4 +207,5 @@ def postgres_repositories(pool: AsyncConnectionPool) -> Repositories:
         sessions=PgSessionRepository(pool),
         documents=PgDocumentRepository(pool),
         session_audit=PgSessionAuditRepository(pool),
+        releases=PgReleaseRepository(pool),
     )

@@ -115,6 +115,21 @@ def test_login_me_logout_against_created_users(client: TestClient) -> None:
     assert client.get("/api/auth/me", headers=cookie).status_code == 401
 
 
+def test_user_search_matches_name_title_department_and_treats_wildcards_as_text(client: TestClient) -> None:
+    cookie = sign_in(client, AUTHOR_EMAIL)
+
+    def names(q: str) -> list[str]:
+        return [u["name"] for u in client.get("/api/users", params={"q": q}, headers=cookie).json()["users"]]
+
+    assert names("  VAISH ") == ["Vaishnavi Aasaithambi"]  # name, any case
+    assert names("software engineering") == ["Manivannan Thangavel"]  # title
+    assert names("sw eng") == ["Vaishnavi Aasaithambi"]  # department
+    assert names("") == ["Manivannan Thangavel", "Vaishnavi Aasaithambi"]
+    assert names("%") == [] and names("_") == [] and names("\\") == []
+    user = client.get("/api/users", headers=cookie).json()["users"][0]
+    assert set(user) == {"id", "name", "title", "department"}
+
+
 def test_document_lifecycle(client: TestClient) -> None:
     author = sign_in(client, AUTHOR_EMAIL)
     admin = sign_in(client, ADMIN_EMAIL)
@@ -152,6 +167,18 @@ def test_invalid_column_value_is_a_500(client: TestClient) -> None:
     assert client.put("/api/documents/pg-4", json=doc("pg-4", date="not-a-date"), headers=author).status_code == 500
 
 
+RELEASE_TABLES = {
+    "releases",
+    "release_milestones",
+    "release_signers",
+    "release_builds",
+    "release_build_runs",
+    "release_signoffs",
+    "release_blockers",
+    "release_audit",
+}
+
+
 def _tables(url: str) -> set[str]:
     with psycopg.connect(url) as conn:
         rows = conn.execute("SELECT tablename FROM pg_tables WHERE schemaname = 'public'").fetchall()
@@ -169,7 +196,7 @@ def test_migrations_upgrade_and_downgrade_cleanly() -> None:
     _wipe(DATABASE_URL)
     config = alembic_config(DATABASE_URL)
     command.upgrade(config, "head")
-    assert _tables(DATABASE_URL) == {"users", "sessions", "documents", "session_audit", "alembic_version"}
+    assert _tables(DATABASE_URL) == CURRENT_TABLES
     command.downgrade(config, "base")
     assert _tables(DATABASE_URL) == {"alembic_version"}
     command.upgrade(config, "head")  # and back up again
@@ -185,7 +212,8 @@ UNUSED_LEGACY_TABLES = {
     "test_cases",
     "test_runs",
 }
-CURRENT_TABLES = {"users", "sessions", "documents", "session_audit", "alembic_version"}
+BASE_TABLES = {"users", "sessions", "documents", "session_audit", "alembic_version"}  # before the releases migration
+CURRENT_TABLES = BASE_TABLES | RELEASE_TABLES
 
 
 def _build_legacy_database(url: str) -> None:
@@ -244,7 +272,7 @@ def test_migration_0006_drops_exactly_the_seven_unused_legacy_tables() -> None:
     command.upgrade(config, "0005")
     assert UNUSED_LEGACY_TABLES <= _tables(DATABASE_URL)  # still there before 0006
     command.upgrade(config, "0006")
-    assert _tables(DATABASE_URL) == CURRENT_TABLES
+    assert _tables(DATABASE_URL) == BASE_TABLES
 
 
 def test_migration_0006_changes_nothing_on_a_fresh_database() -> None:
@@ -255,7 +283,7 @@ def test_migration_0006_changes_nothing_on_a_fresh_database() -> None:
     command.upgrade(config, "0005")
     before = _tables(DATABASE_URL)
     command.upgrade(config, "0006")
-    assert _tables(DATABASE_URL) == before == CURRENT_TABLES
+    assert _tables(DATABASE_URL) == before == BASE_TABLES
 
 
 def test_migration_0006_downgrade_runs_and_does_not_bring_the_tables_back() -> None:
@@ -265,7 +293,7 @@ def test_migration_0006_downgrade_runs_and_does_not_bring_the_tables_back() -> N
     config = alembic_config(DATABASE_URL)
     command.upgrade(config, "head")
     command.downgrade(config, "0005")
-    assert _tables(DATABASE_URL) == CURRENT_TABLES  # the sample data they held is gone for good
+    assert _tables(DATABASE_URL) == BASE_TABLES  # the sample data they held is gone for good
 
 
 def test_create_user_rules() -> None:
@@ -416,6 +444,41 @@ def test_session_audit_records_sign_ins_and_sign_outs(client: TestClient) -> Non
         stored = conn.execute("SELECT session_id_hash FROM session_audit").fetchall()
     assert all(len(h[0]) == 64 for h in stored)  # a sha256, never the session id itself
     assert author["Cookie"].split("=")[1] not in str(stored)
+
+
+def test_a_non_admin_reads_only_their_own_sign_ins_from_postgres(client: TestClient) -> None:
+    author = sign_in(client, AUTHOR_EMAIL)
+    sign_in(client, ADMIN_EMAIL)
+    assert client.post("/api/auth/logout", headers=author).status_code == 204
+    author = sign_in(client, AUTHOR_EMAIL)
+
+    res = client.get("/api/audit/sessions", headers=author)
+    assert res.status_code == 200
+    sessions = res.json()["sessions"]
+    assert [(s["userName"], s["status"]) for s in sessions] == [
+        ("Vaishnavi Aasaithambi", "active"),
+        ("Vaishnavi Aasaithambi", "signed-out"),
+    ]
+
+
+def _indexes(url: str, table: str) -> set[str]:
+    with psycopg.connect(url) as conn:
+        rows = conn.execute("SELECT indexname FROM pg_indexes WHERE tablename = %s", (table,)).fetchall()
+    return {r[0] for r in rows}
+
+
+def test_migration_0007_indexes_sign_ins_by_user_and_downgrades_cleanly() -> None:
+    if not DATABASE_URL:
+        pytest.skip("TEST_DATABASE_URL not set")
+    _wipe(DATABASE_URL)
+    config = alembic_config(DATABASE_URL)
+    command.upgrade(config, "0006")
+    assert "session_audit_user_login_at_idx" not in _indexes(DATABASE_URL, "session_audit")
+    command.upgrade(config, "0007")
+    assert "session_audit_user_login_at_idx" in _indexes(DATABASE_URL, "session_audit")
+    command.downgrade(config, "0006")
+    assert "session_audit_user_login_at_idx" not in _indexes(DATABASE_URL, "session_audit")
+    assert "session_audit_login_at_idx" in _indexes(DATABASE_URL, "session_audit")  # 0003's index untouched
 
 
 def test_session_audit_is_append_only_in_the_database(client: TestClient) -> None:

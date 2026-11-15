@@ -29,7 +29,6 @@ from app.repositories.collections import CollectionStore
 from app.repositories.document_cache import CachedDocumentRepository
 from app.repositories.document_history import DocumentHistoryStore
 from app.repositories.postgres import postgres_repositories
-from app.repositories.releases import ReleaseStore
 from app.repositories.schedules import ScheduleStore
 from app.repositories.test_exec import RemoteJobStore, TestExecRepository
 from app.repositories.test_management import TestManagementStore
@@ -50,6 +49,7 @@ from app.routers import (
     test_schedules,
     test_servers,
     trackers,
+    users,
 )
 from app.schemas.openapi import install_openapi
 from app.services.admin import AdminService
@@ -80,10 +80,11 @@ def build_services(settings: Settings, repos: Repositories, http_client: httpx.A
     remote_runs = RemoteRunService(RemoteJobStore(redis), test_servers, redis, test_store)
     return Services(
         auth=AuthService(repos),
+        users=repos.users,
         session_audit=repos.session_audit,
         collections=CollectionService(CollectionStore(redis)),
         documents=DocumentService(documents, DocumentHistoryStore(redis), repos.users),
-        admin=AdminService(documents, redis, repos.session_audit),
+        admin=AdminService(documents, redis, repos.session_audit, repos.releases),
         ai=AiService(settings, http_client),
         test_management=TestManagementService(test_store),
         test_servers=test_servers,
@@ -91,7 +92,7 @@ def build_services(settings: Settings, repos: Repositories, http_client: httpx.A
         remote_runs=remote_runs,
         schedules=ScheduleService(ScheduleStore(redis), test_store, test_servers, remote_runs),
         ci=CiService(CiTokenStore(redis), test_store, test_servers, remote_runs),
-        releases=ReleaseService(ReleaseStore(redis), test_store, trackers),
+        releases=ReleaseService(repos.releases, repos.users, test_store, trackers),
         trackers=trackers,
         repos=RepoService(
             redis, SecretBox(settings.secrets_key), http_client, settings.bridge_url, settings.bridge_token
@@ -166,6 +167,7 @@ def create_app(
             collections,
             admin,
             releases,
+            users,
         )
     ]
     for router in routers:

@@ -9,7 +9,7 @@ from app.core.middleware import BODY_STATE_KEY
 from app.core.rate_limit import RateLimiter
 from app.core.security import SESSION_COOKIE
 from app.models.user import User
-from app.repositories.base import SessionAuditRepository
+from app.repositories.base import SessionAuditRepository, UserRepository
 from app.services.admin import AdminService
 from app.services.ai import AiService
 from app.services.auth import AuthService
@@ -31,6 +31,7 @@ from app.services.trackers import TrackerService
 @dataclass
 class Services:
     auth: AuthService
+    users: UserRepository
     session_audit: SessionAuditRepository
     collections: CollectionService
     admin: AdminService

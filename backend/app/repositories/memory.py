@@ -15,6 +15,7 @@ from app.core.jscompat import js_loads
 from app.models.document import DocumentRecord, DocumentWrite
 from app.models.user import LoginCandidate, User
 from app.repositories.base import Repositories, iso_z
+from app.repositories.releases_memory import MemoryReleaseRepository
 
 
 class IntegrityError(Exception):
@@ -61,6 +62,18 @@ class MemoryUserRepository:
     async def find_by_name(self, name: str) -> list[User]:
         wanted = name.strip().lower()
         return [s.user for s in self._store.users.values() if s.user.name.strip().lower() == wanted]
+
+    async def find_by_ids(self, user_ids: list[str]) -> list[User]:
+        return [self._store.users[i].user for i in dict.fromkeys(user_ids) if i in self._store.users]
+
+    async def search(self, query: str, limit: int) -> list[User]:
+        wanted = query.strip().lower()
+        found = [
+            s.user
+            for s in self._store.users.values()
+            if wanted in f"{s.user.name}\n{s.user.title or ''}\n{s.user.department or ''}".lower()
+        ]
+        return sorted(found, key=lambda u: (u.name.lower(), u.id))[:limit]
 
 
 class MemorySessionRepository:
@@ -110,9 +123,9 @@ class MemorySessionAuditRepository:
                     entry["logoutTime"] = iso_z(logout_at)
                 return
 
-    async def recent(self, limit: int = 200) -> list[dict[str, Any]]:
-        newest_first = reversed(self._store.session_audit)
-        return [{k: v for k, v in e.items() if not k.startswith("_")} for e in list(newest_first)[:limit]]
+    async def recent(self, limit: int = 200, user_id: str | None = None) -> list[dict[str, Any]]:
+        newest_first = [e for e in reversed(self._store.session_audit) if user_id is None or e["userId"] == user_id]
+        return [{k: v for k, v in e.items() if not k.startswith("_")} for e in newest_first[:limit]]
 
     async def export_all(self) -> list[dict[str, Any]]:
         return [{k: v for k, v in e.items() if not k.startswith("_")} for e in self._store.session_audit]
@@ -188,4 +201,5 @@ def memory_repositories(store: MemoryStore) -> Repositories:
         sessions=MemorySessionRepository(store),
         documents=MemoryDocumentRepository(store),
         session_audit=MemorySessionAuditRepository(store),
+        releases=MemoryReleaseRepository(store),
     )
