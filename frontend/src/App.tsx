@@ -324,7 +324,8 @@ export const App: React.FC = () => {
   const handleLogin = (profile: UserProfile) => {
     loginWithProfile(profile);
     setCurrentUser(profile);
-    setCurrentApp("dashboard");
+    // A release link opened while signed out is still open once signed in.
+    setCurrentApp(startsOnReleases() ? "operations" : "dashboard");
     showToast(`Welcome, ${profile.name}!`);
   };
 

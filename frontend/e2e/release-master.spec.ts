@@ -259,6 +259,16 @@ test('opening Release Master from the sidebar sets its address, leaving clears i
   await expect(page.getByText(/Good (Morning|Afternoon|Evening)/)).toBeVisible();
 });
 
+test('a release link opened while signed out is still open after signing in', async ({ page, stack }) => {
+  await page.addInitScript(() => localStorage.setItem('devdoc_studio_welcome_seen_v1', '1'));
+  await page.goto('/releases');
+  await page.getByPlaceholder('engineer@sanmina.com').fill(stack.users[0].email);
+  await page.getByPlaceholder('Enter your password').fill(stack.users[0].password);
+  await page.getByRole('button', { name: /sign in to platform/i }).click();
+  await expect(page.getByRole('heading', { name: 'Release Master' })).toBeVisible();
+  await expect(page).toHaveURL(/\/releases$/);
+});
+
 test('a message about one change does not follow you to another page', async ({ page }) => {
   await signInAs(page, 'release-manager');
   await openReleaseMaster(page);
