@@ -98,14 +98,6 @@ test.describe('accessibility (axe, WCAG 2 A/AA)', () => {
     }
   });
 
-  test('incident tracker', async ({ page }) => {
-    await signInAs(page);
-    await page.goto('/');
-    await page.getByRole('button', { name: 'Incident Tracker' }).first().click();
-    await expect(page.getByRole('heading', { name: /Incident Reporting/i })).toBeVisible();
-    expect(await scan(page)).toEqual([]);
-  });
-
   test('reviewers log', async ({ page }) => {
     await signInAs(page);
     await page.goto('/');

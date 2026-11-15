@@ -10,7 +10,6 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
-  ShieldAlert,
   ClipboardCheck,
 } from 'lucide-react';
 import type { UserProfile } from '../types/auth';
@@ -60,13 +59,6 @@ const NAV_ITEMS = [
     icon: GitBranch,
     app: 'operations' as AppView,
     opsTab: 'releases' as OperationsTab,
-  },
-  {
-    id: 'incidents',
-    label: 'Incident Tracker',
-    icon: ShieldAlert,
-    app: 'operations' as AppView,
-    opsTab: 'incidents' as OperationsTab,
   },
   {
     id: 'reviewers',

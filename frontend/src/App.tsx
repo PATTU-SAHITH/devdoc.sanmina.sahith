@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import type { DocumentModel, DocSection, SectionType } from "./types/document";
 import type { AppView, OperationsTab } from "./types/appState";
 import type { UserProfile } from "./types/auth";
-import type { IncidentItem } from "./types/operations";
 import type { SettingsTab } from "./components/settings/SettingsPage";
 import { TEMPLATE_REGISTRY, getDefaultDocument } from "./templates";
 import { startsOnReleases, useReleasesUrl } from "./hooks/useReleasesUrl";
@@ -114,7 +113,7 @@ export const App: React.FC = () => {
   });
 
   const [activeOpsTab, setActiveOpsTab] = useState<OperationsTab>(() =>
-    startsOnReleases() ? "releases" : "incidents",
+    startsOnReleases() ? "releases" : "test-cases",
   );
   // The Settings tab last opened.
   const [settingsTab, setSettingsTab] = useState<SettingsTab>("profile");
@@ -391,78 +390,6 @@ export const App: React.FC = () => {
     setActiveSectionId("metadata");
     setActiveDocumentId(id);
     setCurrentApp("doccraft");
-  };
-
-  // Cross-App Incident -> RCA Document Generator
-  const handleExportIncidentToRCA = (incident: IncidentItem) => {
-    const rcaDoc: DocumentModel = {
-      metadata: {
-        id: `rca-${incident.id.toLowerCase()}`,
-        title: `Root Cause Analysis: ${incident.title}`,
-        subtitle: `Investigation, Code Mitigations & Resolution Matrix for ${incident.id}`,
-        docNumber: incident.jiraTicket || incident.id,
-        author: incident.owner,
-        department: "Platform Systems Engineering",
-        date: new Date().toISOString().split("T")[0],
-        version: "1.0",
-        classification: "INTERNAL ONLY",
-        status: incident.status === "Resolved" ? "APPROVED" : "IN_REVIEW",
-        templateType: "technical-analysis",
-        logoUrl:
-          'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none"><rect width="40" height="40" y="10" rx="8" fill="%232563EB"/><path d="M14 24h12v12H14z" fill="white"/><path d="M20 18v6m0 12v6m-6-12H8m24 0h-6" stroke="white" stroke-width="2" stroke-linecap="round"/><text x="50" y="38" fill="%231E3A8A" font-family="Arial" font-weight="bold" font-size="20">FIRMWARE</text></svg>',
-        logoPosition: "center",
-        tags: ["RCA", "Incident", incident.severity, incident.affectedSystem],
-      },
-      sections: [
-        {
-          id: "sec-summary",
-          title: "1. Executive Incident Summary",
-          level: 1,
-          type: "richText",
-          content: `On ${incident.reportedDate}, an engineering incident (${incident.id}) was detected on ${incident.affectedSystem} with severity classification **${incident.severity}**.\n\nImmediate mitigation and root-cause analysis was initiated by ${incident.owner}. Current resolution status is **${incident.status}**.`,
-        },
-        {
-          id: "sec-root-cause",
-          title: "2. Root Cause Analysis (RCA)",
-          level: 1,
-          type: "richText",
-          content: `${incident.rootCause}\n\nTechnical investigation identified error propagation across the subsystem daemon when parsing initial payload arguments.`,
-        },
-        {
-          id: "sec-matrix",
-          title: "3. Verification & Resolution Matrix",
-          level: 1,
-          type: "verificationMatrix",
-          verificationMatrix: [
-            {
-              id: "1",
-              rootCause: incident.rootCause,
-              fixLocation: `${incident.affectedSystem} payload parser`,
-              resolution:
-                incident.status === "Resolved"
-                  ? "Code fix merged and regression verified on hardware testbed."
-                  : "Fix currently under review.",
-              status: incident.status === "Resolved" ? "PASSED" : "PENDING",
-            },
-          ],
-        },
-        {
-          id: "sec-signoff",
-          title: "4. Engineering Sign-off",
-          level: 1,
-          type: "callout",
-          callout: {
-            type: incident.status === "Resolved" ? "success" : "warning",
-            title: `Incident ${incident.id} Status: ${incident.status}`,
-            text: `RCA document compiled automatically from Operations Hub by ${incident.owner}. Ready for formal peer review and JIRA release mapping.`,
-          },
-        },
-      ],
-    };
-
-    if (!openDocumentInEditor(rcaDoc)) return;
-    setCurrentApp("doccraft");
-    showToast(`Generated RCA Document for ${incident.id}!`);
   };
 
   const handleTriggerAi = (
@@ -762,7 +689,6 @@ export const App: React.FC = () => {
             }
             setCurrentApp("doccraft");
           }}
-          onExportIncidentToRCA={handleExportIncidentToRCA}
           onLogout={handleLogout}
           onNavigate={handleLaunchApp}
         />
