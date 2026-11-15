@@ -103,7 +103,7 @@ class TestCreate:
         creator, rid = make_release(api)
         assert [s["name"] for s in get(creator, rid)["signers"]] == [CREATOR.name, OTHER.name, ADMIN.name]
         first = get(creator, rid)["signers"][0]
-        assert first == {"userId": CREATOR.id, "name": CREATOR.name, "title": None, "department": None}
+        assert first == {"userId": CREATOR.id, "name": CREATOR.name, "designation": None, "department": None}
 
     def test_two_to_five_signers_in_all(self, api: Api) -> None:
         creator = api.sign_in(CREATOR)

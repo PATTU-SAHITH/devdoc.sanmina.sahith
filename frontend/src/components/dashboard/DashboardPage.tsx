@@ -195,7 +195,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onNavigate, 
               </div>
               <div className="hidden sm:block text-right">
                 <div className="text-[10px] font-bold text-[#ededed] uppercase tracking-[0.08em] font-mono">{user.name}</div>
-                <div className="text-[9px] text-[#8a8a8a] uppercase tracking-[0.12em] font-mono">{user.title}</div>
+                <div className="text-[9px] text-[#8a8a8a] uppercase tracking-[0.12em] font-mono">{user.designation}</div>
               </div>
             </div>
             <button type="button" onClick={onLogout} className="ui-button ui-button-danger">

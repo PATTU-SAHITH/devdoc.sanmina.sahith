@@ -223,7 +223,7 @@ test('every release and tab has its own link, Back works, and a release can be c
   await expect(page.getByRole('table', { name: 'Audit log' })).toContainText('Release cancelled');
 });
 
-test('the signer picker finds people by name, title or department and enforces 2 to 5 signers', async ({ page }) => {
+test('the signer picker finds people by name, designation or department and enforces 2 to 5 signers', async ({ page }) => {
   await signInAs(page, 'admin');
   await openReleaseMaster(page);
   await page.getByRole('link', { name: 'New release' }).click();

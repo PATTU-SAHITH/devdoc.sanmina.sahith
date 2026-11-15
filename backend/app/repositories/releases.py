@@ -9,7 +9,7 @@ shape, so the service reads and writes the same structure the frontend sees:
 
 release   id, version, title, type, targetDate, segment, status, notes,
           milestones [{key, name, plannedDate, actualDate}],
-          signers [{userId, name, title, department}] (creator first),
+          signers [{userId, name, designation, department}] (creator first),
           gateRules {minPassRate, requireNoOpenBlockers, mandatorySuiteIds},
           blockerQuery, blockerSync, createdBy (user id), createdByName,
           createdAt, updatedAt, cancelledReason, cancelledAt

@@ -46,7 +46,9 @@ class MemoryReleaseRepository:
         rows = []
         for user_id in self._signers.get(release_id, []):
             user = self._store.users[user_id].user
-            rows.append({"userId": user.id, "name": user.name, "title": user.title, "department": user.department})
+            rows.append(
+                {"userId": user.id, "name": user.name, "designation": user.designation, "department": user.department}
+            )
         return rows
 
     def _view(self, release_id: str) -> dict[str, Any]:

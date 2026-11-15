@@ -92,7 +92,7 @@ const BuildCard: React.FC<{ release: Release; build: Build; runs: TestRunItem[];
             const d = build.signoffs[s.userId];
             return (
               <div key={s.userId} className="mb-1.5">
-                <div><b>{s.name}</b>{s.title ? <span className="text-slate-500"> · {s.title}</span> : null} · {d ? <Badge tone={d.decision === 'Approved' ? 'green' : 'red'}>{d.decision}</Badge> : <span className="text-slate-500">pending</span>}</div>
+                <div><b>{s.name}</b>{s.designation ? <span className="text-slate-500"> · {s.designation}</span> : null} · {d ? <Badge tone={d.decision === 'Approved' ? 'green' : 'red'}>{d.decision}</Badge> : <span className="text-slate-500">pending</span>}</div>
                 {d?.comment && <div className="text-slate-600">"{d.comment}"</div>}
               </div>
             );

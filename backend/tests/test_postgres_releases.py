@@ -66,7 +66,7 @@ def test_a_release_goes_from_creation_to_final_and_back_out_of_postgres(client: 
     release = created.json()["release"]
     rid = release["id"]
     assert [s["name"] for s in release["signers"]] == ["Vaishnavi Aasaithambi", "Manivannan Thangavel"]
-    assert release["signers"][0]["title"] == "Technical lead"
+    assert release["signers"][0]["designation"] == "Technical lead"
     assert release["targetDate"] == "2026-12-01" and release["gateRules"]["minPassRate"] == 98
     assert [m["key"] for m in release["milestones"]] == [
         "code-freeze",

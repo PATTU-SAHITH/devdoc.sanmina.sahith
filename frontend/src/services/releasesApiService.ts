@@ -17,7 +17,7 @@ export const MIN_SIGNERS = 2;
 export const MAX_SIGNERS = 5;
 
 export interface Milestone { key: string; name: string; plannedDate: string | null; actualDate: string | null }
-export interface Signer { userId: string; name: string; title: string | null; department: string | null }
+export interface Signer { userId: string; name: string; designation: string | null; department: string | null }
 export interface GateRules { minPassRate: number; requireNoOpenBlockers: boolean; mandatorySuiteIds: string[] }
 export interface GateCheck { id: string; label: string; passed: boolean; detail: string }
 export interface Signoff { userId: string; userName: string; decision: 'Approved' | 'Rejected'; comment: string | null; at: string }

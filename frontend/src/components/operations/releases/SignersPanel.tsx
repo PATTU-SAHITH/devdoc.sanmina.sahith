@@ -12,7 +12,7 @@ import { type Act, Badge, btn, card } from './common';
  * added later has to approve too.
  */
 export const SignersPanel: React.FC<{ release: Release; act: Act }> = ({ release, act }) => {
-  const saved: PersonOption[] = release.signers.filter((s) => s.userId !== release.createdBy).map((s) => ({ id: s.userId, name: s.name, title: s.title, department: s.department }));
+  const saved: PersonOption[] = release.signers.filter((s) => s.userId !== release.createdBy).map((s) => ({ id: s.userId, name: s.name, designation: s.designation, department: s.department }));
   const [others, setOthers] = useState<PersonOption[]>(saved);
   const key = saved.map((p) => p.id).join(',');
   useEffect(() => setOthers(saved), [key]); // eslint-disable-line react-hooks/exhaustive-deps

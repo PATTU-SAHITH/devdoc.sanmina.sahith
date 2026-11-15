@@ -48,7 +48,7 @@ and the route tests guard it now.
 ### User object
 
 ```json
-{"id": "usr-01", "name": "…", "email": "…", "title": "…|null", "department": "…|null",
+{"id": "usr-01", "name": "…", "email": "…", "designation": "…|null", "department": "…|null",
  "role": "admin|release-manager|firmware-lead|…", "avatarBg": "…|null", "initials": "…|null"}
 ```
 
@@ -56,7 +56,7 @@ and the route tests guard it now.
 
 `GET /api/users?q=<text>` (any signed-in user) feeds the user pickers, for example choosing who signs off a release.
 
-- Returns `200 {"users": [{"id", "name", "title": "…|null", "department": "…|null"}]}`: up to 20 people whose name, title or department contains `q`, ignoring case and surrounding spaces, ordered by name. `%` and `_` in `q` are plain text. An empty or missing `q` returns the first 20 by name.
+- Returns `200 {"users": [{"id", "name", "designation": "…|null", "department": "…|null"}]}`: up to 20 people whose name, designation or department contains `q`, ignoring case and surrounding spaces, ordered by name. `%` and `_` in `q` are plain text. An empty or missing `q` returns the first 20 by name.
 - Never includes email, role or any credential. Only the first 100 characters of `q` are used.
 
 ### Session audit log
@@ -226,7 +226,7 @@ Release management (SRS-033 to 046). Admins and regular users are treated the sa
 | `POST /api/releases/{id}/blockers/lookup` | creator | `{tracker, key}` → `{"blocker"}` read from Jira / GitHub |
 | `POST /api/releases/{id}/blockers/sync` | creator | → `{at, added, closed, reopened, error}`; a background worker also syncs every 5 minutes |
 
-**Full release** (`GET /api/releases/{id}` and every release-returning route): `id, version, title, type, targetDate, segment, status, notes, milestones [{key, name, plannedDate, actualDate}], signers [{userId, name, title, department}] (creator first), gateRules {minPassRate, requireNoOpenBlockers, mandatorySuiteIds}, blockerQuery, blockerSync, createdBy (user id), createdByName, createdAt, updatedAt, cancelledReason, cancelledAt, canEdit, isSigner, signersLocked, metrics, blockers, builds`.
+**Full release** (`GET /api/releases/{id}` and every release-returning route): `id, version, title, type, targetDate, segment, status, notes, milestones [{key, name, plannedDate, actualDate}], signers [{userId, name, designation, department}] (creator first), gateRules {minPassRate, requireNoOpenBlockers, mandatorySuiteIds}, blockerQuery, blockerSync, createdBy (user id), createdByName, createdAt, updatedAt, cancelledReason, cancelledAt, canEdit, isSigner, signersLocked, metrics, blockers, builds`.
 
 **Build**: `id, number, label, kind (RC|Final), imageName, commitSha, branchTag, artifactUrl, repository, sha256, builtAt, pipelineBuildId, testRunIds, gateOverride {by, byId, reason, at}|null, promotedBy, promotedById, promotedAt, createdBy, createdByName, createdAt, signoffs {userId: {userId, userName, decision, comment, at}}`, plus on the full release `gates {checks, passed, overridden, ready, passRate, coverage, linkedRuns, verification}` and `signoffStatus {required, approved, rejected, waitingFor, complete}`.
 
