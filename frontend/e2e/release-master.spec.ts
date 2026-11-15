@@ -202,7 +202,7 @@ test('every release and tab has its own link, Back works, and a release can be c
   await page.reload(); // a refresh keeps you where you were
   await expect(page.getByRole('table', { name: 'Release blockers' })).toBeVisible();
 
-  await page.getByRole('link', { name: '← All releases' }).click();
+  await page.getByRole('link', { name: 'All releases' }).click();
   await expect(page.getByRole('table', { name: 'Releases' })).toContainText('v4.0.0');
 
   // A release that does not exist says so.
@@ -257,4 +257,15 @@ test('opening Release Master from the sidebar sets its address, leaving clears i
   await expect(page).toHaveURL(/\/releases$/);
   await page.goForward();
   await expect(page.getByText(/Good (Morning|Afternoon|Evening)/)).toBeVisible();
+});
+
+test('a message about one change does not follow you to another page', async ({ page }) => {
+  await signInAs(page, 'release-manager');
+  await openReleaseMaster(page);
+  await createRelease(page, 'v5.0.0', ['Manivannan Thangavel']);
+  await page.getByRole('button', { name: 'Save release' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Release saved.' })).toBeVisible();
+  await page.getByRole('link', { name: /All releases/ }).click();
+  await expect(page.getByRole('table', { name: 'Releases' })).toBeVisible();
+  await expect(page.getByText('Release saved.')).toHaveCount(0);
 });
