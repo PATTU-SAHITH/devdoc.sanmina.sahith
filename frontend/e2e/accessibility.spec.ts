@@ -2,8 +2,12 @@ import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, signInAs, seedDocuments } from './fixtures';
 
+// Reduced motion switches off the sidebar's fade, so axe measures the final
+// colours rather than a half-faded label. The Coder screen embeds code-server's
+// own page in an iframe; that third-party page is not ours to fix, so it is skipped.
 async function scan(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).exclude('iframe').analyze();
   return results.violations.map(
     (v) => `${v.id} (${v.impact}) x${v.nodes.length}: ${v.help}\n` +
       v.nodes.map((n) => `    ${n.target.join(' ')}  ${n.failureSummary?.split('\n')[1]?.trim() ?? ''}`).join('\n'),
