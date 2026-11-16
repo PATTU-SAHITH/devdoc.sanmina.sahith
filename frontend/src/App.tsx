@@ -42,16 +42,7 @@ import {
   logoutBackend,
 } from "./services/backendAuthService";
 import { createDebouncedSaver } from "./services/autosave";
-import {
-  buildTrackedDocuments,
-  filterTracked,
-  type TrackedStatus,
-} from "./services/documentStats";
-import {
-  getStoredReviewersLog,
-  reviewersLog,
-} from "./services/reviewersLogService";
-import { useSharedCollection } from "./services/sharedCollection";
+import { filterByStatus, type DocumentFilter } from "./services/documentStats";
 import {
   canEditDocument,
   canDeleteDocument,
@@ -142,14 +133,10 @@ export const App: React.FC = () => {
   const [docBinOpen, setDocBinOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   // Set when the dashboard sends you to the list narrowed to one status.
-  const [documentsStatusFilter, setDocumentsStatusFilter] = useState<Exclude<
-    TrackedStatus,
-    "OTHER"
-  > | null>(null);
+  const [documentsStatusFilter, setDocumentsStatusFilter] =
+    useState<DocumentFilter | null>(null);
   // Documents are loaded from the server; re-render when they load or change.
   const { version: documentListVersion } = useDocuments();
-  // The documents list shows review status from the shared reviewers log: re-render once it loads.
-  useSharedCollection(reviewersLog);
 
   // AI Modal States
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -373,7 +360,7 @@ export const App: React.FC = () => {
   // Dashboard drill-downs: a status card opens the list for that status,
   // an activity row opens that document directly.
   const handleOpenDocumentsByStatus = (
-    status: Exclude<TrackedStatus, "OTHER"> | null,
+    status: DocumentFilter | null,
   ) => {
     autosaverRef.current.flush();
     setDocumentsStatusFilter(status);
@@ -730,20 +717,10 @@ export const App: React.FC = () => {
   if (!activeDocumentId) {
     void documentListVersion;
     const userIsAdmin = isAdmin(currentUser);
-    const tracked = filterTracked(
-      buildTrackedDocuments(
-        visibleDocumentsFor(currentUser, listDocuments()),
-        getStoredReviewersLog(),
-        userIsAdmin,
-      ),
+    const visibleDocs = filterByStatus(
+      visibleDocumentsFor(currentUser, listDocuments()),
       documentsStatusFilter,
     );
-    const visibleDocs = documentsStatusFilter
-      ? tracked.flatMap((t) => (t.stored ? [t.stored] : []))
-      : visibleDocumentsFor(currentUser, listDocuments());
-    const notStored = documentsStatusFilter
-      ? tracked.filter((t) => !t.stored)
-      : [];
     const scopeBase = userIsAdmin
       ? "All documents"
       : "Documents currently in progress";
@@ -760,11 +737,6 @@ export const App: React.FC = () => {
           onClearFilter={
             documentsStatusFilter
               ? () => setDocumentsStatusFilter(null)
-              : undefined
-          }
-          notStoredNote={
-            notStored.length > 0
-              ? `${notStored.length} more tracked in the Reviewers Log but not stored on the server: ${notStored.map((t) => t.docNumber || t.title).join(", ")}`
               : undefined
           }
           onOpen={handleOpenDocument}

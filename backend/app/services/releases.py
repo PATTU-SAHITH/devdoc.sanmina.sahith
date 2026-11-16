@@ -50,6 +50,8 @@ DEFAULT_GATE_RULES = {"minPassRate": 98, "requireNoOpenBlockers": True, "mandato
 FIRST_RC_NUMBER = 100  # v2.4.0-RC100, -RC101, ... (DDS-SRS-039)
 MIN_SIGNERS = 2
 MAX_SIGNERS = 5
+ACTIVITY_DEFAULT = 10
+ACTIVITY_MAX = 50
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _GENESIS = "0" * 64
 
@@ -175,6 +177,24 @@ class ReleaseService:
         await self._release_or_404(release_id)
         entries = await self._repo.audit(release_id)
         return {"entries": entries, "intact": verify_chain(entries)}
+
+    async def activity(self, limit_param: str | None) -> dict[str, Any]:
+        """The latest audit entries across every release, newest first, for the
+        dashboard's recent activity. Anyone signed in can read any release."""
+        limit = ACTIVITY_DEFAULT
+        if limit_param is not None:
+            if not limit_param.isdigit() or not 1 <= int(limit_param) <= ACTIVITY_MAX:
+                raise ApiError(400, f"limit must be a whole number from 1 to {ACTIVITY_MAX}.")
+            limit = int(limit_param)
+        entries = await self._repo.recent_audit(limit)
+        versions = {r["id"]: r["version"] for r in await self._repo.list_all()} if entries else {}
+        keep = ("seq", "at", "actorId", "actor", "action", "details")
+        return {
+            "entries": [
+                {"releaseId": e["releaseId"], "version": versions.get(e["releaseId"]), **{k: e[k] for k in keep}}
+                for e in entries
+            ]
+        }
 
     async def export_all(self) -> list[dict[str, Any]]:
         return await self._repo.export_all()

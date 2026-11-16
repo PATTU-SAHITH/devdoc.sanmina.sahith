@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { draftReleaseNotes, loadAudit, updateRelease, type AuditEntry, type Release } from '../../../services/releasesApiService';
+import { AUDIT_ACTIONS, draftReleaseNotes, loadAudit, updateRelease, type AuditEntry, type Release } from '../../../services/releasesApiService';
 import { formatAuditDetails } from './auditFormat';
 import { type Act, Badge, SectionHeader, btn, card, input, tableFrame, td, th, tr } from './common';
 
@@ -20,15 +20,6 @@ export const Notes: React.FC<{ release: Release; runName: (id: string) => string
       {!release.canEdit && <p className="text-xs text-slate-500">Only {release.createdByName}, who created this release, edits its notes.</p>}
     </section>
   );
-};
-
-const ACTIONS: Record<string, string> = {
-  'release-created': 'Release created', 'release-edited': 'Release details changed', 'status-changed': 'Status changed',
-  'release-cancelled': 'Release cancelled', 'signers-changed': 'Signers changed', 'build-registered': 'Build registered',
-  'test-runs-linked': 'Test runs linked', 'gates-overridden': 'Gates overridden', 'signed-off': 'Signed off',
-  'promoted-to-final': 'Promoted to Final', 'blocker-logged': 'Blocker logged', 'blocker-closed': 'Blocker closed',
-  'blocker-open': 'Blocker reopened', 'blocker-removed': 'Blocker removed', 'blockers-synced': 'Blockers synced from Jira / GitHub',
-  'blocker-query-changed': 'Blocker query changed', 'gate-rules-changed': 'Readiness rules changed',
 };
 
 export const Audit: React.FC<{ releaseId: string }> = ({ releaseId }) => {
@@ -54,7 +45,7 @@ export const Audit: React.FC<{ releaseId: string }> = ({ releaseId }) => {
                 <td className={`${td} text-right tabular-nums text-slate-500`}>{e.seq}</td>
                 <td className={`${td} whitespace-nowrap`}>{new Date(e.at).toLocaleString()}</td>
                 <td className={`${td} whitespace-nowrap`}>{e.actor}</td>
-                <td className={`${td} whitespace-nowrap font-semibold`}>{ACTIONS[e.action] ?? e.action}</td>
+                <td className={`${td} whitespace-nowrap font-semibold`}>{AUDIT_ACTIONS[e.action] ?? e.action}</td>
                 <td className={td}>
                   <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
                     {formatAuditDetails(e.details).map(({ label, value }) => (

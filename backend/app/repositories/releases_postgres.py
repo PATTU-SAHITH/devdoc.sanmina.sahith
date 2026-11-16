@@ -466,6 +466,27 @@ class PgReleaseRepository:
             for r in rows
         ]
 
+    async def recent_audit(self, limit: int) -> list[dict[str, Any]]:
+        # The identity column is write order: two entries can share a timestamp.
+        rows = await self._fetch(
+            """SELECT release_id, seq, at, actor_id, actor, actor_role, action, details
+               FROM release_audit ORDER BY id DESC LIMIT %s""",
+            (limit,),
+        )
+        return [
+            {
+                "releaseId": r["release_id"],
+                "seq": r["seq"],
+                "at": r["at"],
+                "actorId": r["actor_id"],
+                "actor": r["actor"],
+                "actorRole": r["actor_role"],
+                "action": r["action"],
+                "details": r["details"],
+            }
+            for r in rows
+        ]
+
     async def export_all(self) -> list[dict[str, Any]]:
         out = []
         for release in await self.list_all():

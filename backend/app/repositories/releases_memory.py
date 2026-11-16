@@ -34,6 +34,7 @@ class MemoryReleaseRepository:
         self._signoffs: dict[tuple[str, str], dict[str, dict[str, Any]]] = {}
         self._blockers: dict[str, dict[str, dict[str, Any]]] = {}
         self._audit: dict[str, list[dict[str, Any]]] = {}
+        self._audit_written: list[tuple[str, int]] = []  # (release id, index), in write order
         self._sync_slots: dict[str, int] = {}
         self._order = 0
 
@@ -205,9 +206,14 @@ class MemoryReleaseRepository:
     ) -> None:
         log = self._audit[release_id]
         log.append(make_entry(copy.deepcopy(log[-1]) if log else None))
+        self._audit_written.append((release_id, len(log) - 1))
 
     async def audit(self, release_id: str) -> list[dict[str, Any]]:
         return copy.deepcopy(self._audit.get(release_id, []))
+
+    async def recent_audit(self, limit: int) -> list[dict[str, Any]]:
+        latest = self._audit_written[::-1][:limit]
+        return [{**copy.deepcopy(self._audit[rid][i]), "releaseId": rid} for rid, i in latest]
 
     async def export_all(self) -> list[dict[str, Any]]:
         out = []

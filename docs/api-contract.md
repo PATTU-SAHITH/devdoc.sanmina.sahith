@@ -132,6 +132,7 @@ Changing the author name therefore changes ownership: an admin who names another
 | Route | Success | Errors |
 |---|---|---|
 | `GET /api/documents` | `200 {"documents": [Document + "ownerId" + "updatedAt"]}`, visible and not deleted, most recently updated first | — |
+| `GET /api/documents/stats` | `200 {"total": n, "byStatus": {"DRAFT": n, "IN_REVIEW": n, "APPROVED": n, "PUBLISHED": n}}`: every non-deleted document, the same for everyone signed in (numbers only; the dashboard cards, DDS-SRS-005) | — |
 | `GET /api/documents/:id` | `200 {"document": Document + "ownerId" + "updatedAt"}` | `404 Document not found.` (missing, deleted or invisible) |
 | `PUT /api/documents/:id` | `200 {"document": Document}` (see below; no `updatedAt`) | `400 Body must be a document with metadata and sections.` · `400 status must be one of DRAFT, IN_REVIEW, APPROVED, PUBLISHED.` · `403 You can only edit documents you authored.` |
 | `DELETE /api/documents/:id` | `204` (soft delete) | `404 Document not found.` · `403 You can only delete documents you authored.` |
@@ -209,6 +210,7 @@ Release management (SRS-033 to 046). Admins and regular users are treated the sa
 | Route | Who | Body → result |
 |---|---|---|
 | `GET /api/releases` | any | `{"releases": [line]}`; line = `id, version, title, type, status, targetDate, segment, createdBy, createdByName, signerCount, canEdit, isSigner, metrics{builds, latestBuild, finalBuild, openBlockers}` |
+| `GET /api/releases/activity?limit=` | any | `{"entries": [{releaseId, version, seq, at, actorId, actor, action, details}]}`: the latest audit entries across every release, newest first (default 10, 1 to 50; `400` otherwise). The dashboard's recent activity |
 | `GET /api/releases/{id}` | any | `{"release": …}` full release (below); `404 Release not found.` |
 | `POST /api/releases` | any | `{version, type, targetDate, status?, title?, segment?, notes?, milestones?, gateRules?, blockerQuery?, signerIds: [1 to 4 user ids]}` → `{"release"}`. The caller is added as first signer (also listing them is ignored). `400 A release needs 2 to 5 signers: you and 1 to 4 others.` / `400 Unknown user: <id>.` / `409 A release with version <v> already exists.` (version is unique ignoring case and surrounding spaces) |
 | `PATCH /api/releases/{id}` | creator | any of `version, title, type, targetDate, segment, status, notes, milestones, gateRules, blockerQuery`; only the fields sent change. `status` cannot be `Cancelled` (use cancel). `409` if the version changes after a build exists, or the readiness rules change after a build is Final. |
