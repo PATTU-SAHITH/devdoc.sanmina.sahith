@@ -2729,8 +2729,8 @@ const LeftPanel: React.FC<{
     <div className="w-56 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
       <div className="h-24 px-4 border-b border-slate-200 flex flex-col justify-center">
         <div className="flex items-center gap-2 mb-1">
-          <FlaskConical className="w-4 h-4 text-teal-600"/>
-          <span className="text-xs font-bold text-[var(--success)] uppercase tracking-wider">Test Management</span>
+          <FlaskConical className="w-4 h-4 text-[var(--accent-text)]"/>
+          <span className="text-xs font-bold text-[var(--accent-text)] uppercase tracking-wider">Test Management</span>
         </div>
         <p className="text-[10px] text-slate-400">WH3-1205 · AST2600</p>
       </div>
