@@ -653,3 +653,18 @@ class TestRecordedValues:
         assert metrics["latestPassRate"] == 50.0 and metrics["latestCoverage"] == 100.0
         assert metrics["openBlockers"] == 1 and metrics["finalBuild"] is None
         assert metrics["milestonesTotal"] == 5
+
+
+class TestMemoryReset:
+    """The browser-test server resets between tests; releases must go too, or
+    one test's releases show up in the next (tests/e2e_server.py)."""
+
+    def test_clear_empties_every_release_table(self, api: Api) -> None:
+        creator, rid = make_release(api)
+        creator.post(f"{BASE}/{rid}/builds", json=build_body())
+        repo = api.client.app.state.services.releases._repo  # type: ignore[attr-defined]
+        repo.clear()
+        assert creator.get(BASE).json() == {"releases": []}
+        assert creator.get(f"{BASE}/activity").json() == {"entries": []}
+        _, again = make_release(api)  # the same version can be created again
+        assert creator.get(f"{BASE}/{again}").status_code == 200

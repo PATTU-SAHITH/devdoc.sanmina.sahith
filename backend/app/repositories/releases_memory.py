@@ -28,6 +28,10 @@ def _version_key(version: str) -> str:
 class MemoryReleaseRepository:
     def __init__(self, store: "MemoryStore") -> None:
         self._store = store
+        self.clear()
+
+    def clear(self) -> None:
+        """Forgets every release (the browser-test server's reset)."""
         self._releases: dict[str, dict[str, Any]] = {}
         self._signers: dict[str, list[str]] = {}
         self._builds: dict[str, dict[str, dict[str, Any]]] = {}

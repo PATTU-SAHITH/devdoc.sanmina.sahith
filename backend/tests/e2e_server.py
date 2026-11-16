@@ -22,6 +22,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 from app.main import create_app
 from app.repositories.memory import memory_repositories
+from app.repositories.releases_memory import MemoryReleaseRepository
 from tests.seed import TEST_USERS, seeded_store, test_settings
 
 
@@ -53,15 +54,18 @@ def main() -> None:
             else {}
         ),
     )
-    app = create_app(settings, repositories=memory_repositories(store), redis=redis)
+    repositories = memory_repositories(store)
+    app = create_app(settings, repositories=repositories, redis=redis)
 
     async def with_reset(scope: dict[str, Any], receive: Any, send: Any) -> None:
-        """POST /__e2e/reset empties Redis and the documents, so each browser
-        test starts from the sample data. Users (and their sessions) stay.
+        """POST /__e2e/reset empties Redis, the documents and the releases, so
+        each browser test starts from the sample data. Users (and their sessions) stay.
         Test harness only - not part of the API."""
         if scope["type"] == "http" and scope["path"] == "/__e2e/reset" and scope["method"] == "POST":
             await redis.flushall()
             store.documents.clear()
+            assert isinstance(repositories.releases, MemoryReleaseRepository)
+            repositories.releases.clear()
             await send({"type": "http.response.start", "status": 204, "headers": []})
             await send({"type": "http.response.body", "body": b""})
             return
