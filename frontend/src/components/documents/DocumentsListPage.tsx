@@ -4,6 +4,7 @@ import type { DocumentModel, DocStatus } from '../../types/document';
 import type { AppView, OperationsTab } from '../../types/appState';
 import type { UserProfile } from '../../types/auth';
 import { AppSidebar } from '../AppSidebar';
+import { ProfileMenu } from '../ProfileMenu';
 import { DocBinModal } from './DocBinModal';
 
 interface DocumentsListPageProps {
@@ -17,7 +18,6 @@ interface DocumentsListPageProps {
   onDelete: (id: string) => void;
   onRestore: () => void;
   onNavigate: (app: AppView, opsTab?: OperationsTab) => void;
-  onLogout: () => void;
 }
 
 const STATUS_STYLES: Record<DocStatus, { bg: string; text: string; dot: string }> = {
@@ -28,7 +28,7 @@ const STATUS_STYLES: Record<DocStatus, { bg: string; text: string; dot: string }
 };
 
 export const DocumentsListPage: React.FC<DocumentsListPageProps> = ({
-  user, documents, scopeLabel, onClearFilter, onOpen, onCreate, onDelete, onRestore, onNavigate, onLogout,
+  user, documents, scopeLabel, onClearFilter, onOpen, onCreate, onDelete, onRestore, onNavigate,
 }) => {
   const [docBinOpen, setDocBinOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,7 +41,7 @@ export const DocumentsListPage: React.FC<DocumentsListPageProps> = ({
     : documents;
   return (
     <div className="flex h-screen bg-[var(--bg)] text-[var(--text)] font-sans overflow-hidden">
-      <AppSidebar user={user} compact activeView="doccraft" onNavigate={onNavigate} onLogout={onLogout} />
+      <AppSidebar user={user} compact activeView="doccraft" onNavigate={onNavigate} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <div className="h-16 px-6 border-b border-[var(--border)] flex items-center justify-between shrink-0">
@@ -78,6 +78,7 @@ export const DocumentsListPage: React.FC<DocumentsListPageProps> = ({
           >
             <Plus className="w-3.5 h-3.5" /> New Document
           </button>
+          <ProfileMenu />
           </div>
         </div>
 

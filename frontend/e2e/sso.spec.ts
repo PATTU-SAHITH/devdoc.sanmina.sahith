@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { startStack, type Stack } from './backendHarness';
+import { signOut } from './helpers';
 
 // DDS-SRS-076: single sign-on over OpenID Connect (the harness's fake
 // provider: real redirects, PKCE, an RS256 ID token checked against its
@@ -24,7 +25,7 @@ test('sign in with the provider, then use and revoke a JWT access token', async 
   // Provider -> API callback -> back to the app, signed in, address bar clean.
   await expect(page.getByText(/Good (Morning|Afternoon|Evening)/)).toBeVisible();
   expect(new URL(page.url()).search).toBe('');
-  await expect(page.getByText(admin.name).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: `Profile menu for ${admin.name}` })).toBeVisible();
 
   // A JWT from Settings -> Profile works as a Bearer token on the API...
   await page.getByRole('button', { name: 'Settings' }).first().click();
@@ -34,11 +35,8 @@ test('sign in with the provider, then use and revoke a JWT access token', async 
   const me = await page.request.get(`${stack.apiUrl}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
   expect((await me.json()).user.email).toBe(admin.email);
 
-  // ...until the session it came from signs out. A press in the page content
-  // closes the sidebar (its sign-out button is hidden then), so open it first.
-  const maximize = page.getByRole('button', { name: 'Maximize sidebar' });
-  if (await maximize.isVisible()) await maximize.click();
-  await page.getByRole('button', { name: /log ?out|sign ?out/i }).first().click();
+  // ...until the session it came from signs out (the profile menu, top right).
+  await signOut(page);
   await expect(page.getByPlaceholder('Enter your password')).toBeVisible();
   const after = await page.request.get(`${stack.apiUrl}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
   expect(after.status()).toBe(401);

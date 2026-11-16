@@ -29,7 +29,6 @@ function renderSettings(role: 'admin' | 'user', activeTab: SettingsTab = 'data')
       <SettingsPage
         user={makeUser({ role })}
         onNavigate={vi.fn()}
-        onLogout={vi.fn()}
         onUpdateAvatar={vi.fn()}
         activeTab={activeTab}
         onTabChange={vi.fn()}

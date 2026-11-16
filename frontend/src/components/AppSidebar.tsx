@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useSyncExternalStore } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   FileText,
   LayoutDashboard,
@@ -6,7 +6,7 @@ import {
   FlaskConical,
   GitBranch,
   Settings,
-  LogOut,
+  HelpCircle,
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import type { UserProfile } from '../types/auth';
 import type { AppView, OperationsTab } from '../types/appState';
+import { WelcomeModal } from './onboarding/WelcomeModal';
+import { markWelcomeSeen } from '../services/onboardingService';
 
 interface AppSidebarProps {
   user: UserProfile;
@@ -21,7 +23,6 @@ interface AppSidebarProps {
   activeView: AppView;
   activeOpsTab?: OperationsTab;
   onNavigate: (app: AppView, opsTab?: OperationsTab) => void;
-  onLogout: () => void;
 }
 
 const NAV_ITEMS = [
@@ -142,9 +143,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   activeView,
   activeOpsTab,
   onNavigate,
-  onLogout,
 }) => {
   const expanded = useSyncExternalStore(subscribe, getExpanded, getExpanded);
+  const [guideOpen, setGuideOpen] = useState(false);
   const asideRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -172,6 +173,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const fade = `transition-opacity motion-reduce:transition-none ${expanded ? 'opacity-100 duration-200 delay-100' : 'opacity-0 duration-100 delay-0'}`;
 
   return (
+    <>
     <aside
       ref={asideRef}
       id="app-sidebar-panel"
@@ -244,36 +246,25 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         })}
       </nav>
 
-      <div className="relative mt-auto shrink-0 p-3 border-t border-[var(--border)] bg-[var(--panel)] flex items-center gap-2.5">
-        {user.avatarUrl ? (
-          <img src={user.avatarUrl} alt={`${user.name} profile`} className="w-8 h-8 border border-[var(--border)] object-cover shrink-0" />
-        ) : (
-          <div className="w-8 h-8 border border-[var(--border)] bg-[var(--panel-alt)] flex items-center justify-center text-[10px] font-bold text-[var(--text)] font-mono uppercase shrink-0">
-            {user.initials}
-          </div>
-        )}
-        {/* Fixed width: the bar clips it while closing, rather than the
-            text re-truncating on every frame of the animation. */}
-        <div aria-hidden={!expanded} className={`w-[150px] shrink-0 min-w-0 ${fade}`}>
-          <div className="text-[10px] font-bold text-[var(--text)] uppercase tracking-[0.08em] truncate font-mono">{user.name}</div>
-          <div className="text-[9px] text-[var(--text-dim)] uppercase tracking-[0.1em] truncate font-mono">{user.designation}</div>
-        </div>
+      {/* The user and sign-out live in the profile menu (top right); the
+          bottom of the bar opens the welcome guide, on every screen. */}
+      <div className="mt-auto shrink-0 p-2 border-t border-[var(--border)]">
         <button
           type="button"
-          onClick={() => {
-            resetAppSidebar();
-            onLogout();
+          onClick={(event) => {
+            event.stopPropagation();
+            setGuideOpen(true);
           }}
-          title="Sign Out"
-          aria-hidden={!expanded}
-          tabIndex={expanded ? 0 : -1}
-          className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 border border-[var(--border)] bg-[var(--panel)] text-[var(--danger)] hover:bg-[var(--panel-alt)] transition-[opacity,background-color] motion-reduce:transition-none ${
-            expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
+          aria-label="Welcome guide"
+          title={!expanded ? 'Welcome guide' : undefined}
+          className="w-full flex items-center gap-3 px-2.5 py-2.5 text-left overflow-hidden text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-[var(--panel-alt)] transition-colors"
         >
-          <LogOut className="w-3.5 h-3.5" />
+          <HelpCircle className="w-4 h-4 shrink-0" />
+          <span className={`whitespace-nowrap text-[11px] font-medium uppercase tracking-[0.12em] font-mono ${fade}`}>Welcome guide</span>
         </button>
       </div>
     </aside>
+    {guideOpen && <WelcomeModal user={user} onClose={() => { markWelcomeSeen(); setGuideOpen(false); }} />}
+    </>
   );
 };

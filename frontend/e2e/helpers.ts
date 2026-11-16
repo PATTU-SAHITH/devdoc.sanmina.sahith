@@ -43,3 +43,9 @@ export async function importCasesInput(page: Page) {
   await page.getByRole('button', { name: 'More', exact: true }).first().click();
   return page.getByLabel('Test cases from CSV, JSON or XML…');
 }
+
+/** Signs out through the profile menu in the top-right corner. */
+export async function signOut(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /^Profile menu for/ }).first().click();
+  await page.getByRole('menuitem', { name: 'Log out' }).click();
+}

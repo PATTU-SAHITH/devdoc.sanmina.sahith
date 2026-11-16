@@ -15,6 +15,7 @@ import {
 import type { AppView, OperationsTab } from '../../types/appState';
 import type { UserProfile } from '../../types/auth';
 import { AppSidebar } from '../AppSidebar';
+import { ProfileMenu } from '../ProfileMenu';
 import { ReposModal } from './ReposModal';
 import { isReposAvailable } from '../../services/reposApiService';
 
@@ -40,11 +41,10 @@ const ENVIRONMENT_LABEL = 'codercom/code-server (Claude 3.7 Sonnet)';
 interface CoderViewProps {
   user: UserProfile;
   onNavigate: (app: AppView, opsTab?: OperationsTab) => void;
-  onLogout: () => void;
 }
 
 /* ─── Component ─── */
-export const CoderView: React.FC<CoderViewProps> = ({ user, onNavigate, onLogout }) => {
+export const CoderView: React.FC<CoderViewProps> = ({ user, onNavigate }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -120,7 +120,6 @@ export const CoderView: React.FC<CoderViewProps> = ({ user, onNavigate, onLogout
         user={user}
         activeView="coder"
         onNavigate={onNavigate}
-        onLogout={onLogout}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
@@ -222,6 +221,7 @@ export const CoderView: React.FC<CoderViewProps> = ({ user, onNavigate, onLogout
               <ExternalLink className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Popout Window</span>
             </button>
+            <ProfileMenu />
           </div>
         </header>
 

@@ -13,7 +13,8 @@ import { DocumentPreview } from "./components/DocumentPreview";
 import { AiRephraseModal } from "./components/ai/AiRephraseModal";
 import { AiSettingsModal } from "./components/ai/AiSettingsModal";
 import { LoginPage } from "./components/auth/LoginPage";
-import { AppSidebar } from "./components/AppSidebar";
+import { AppSidebar, resetAppSidebar } from "./components/AppSidebar";
+import { AccountContext } from "./components/accountContext";
 import { DocumentsListPage } from "./components/documents/DocumentsListPage";
 import {
   listDocuments,
@@ -641,18 +642,30 @@ export const App: React.FC = () => {
   const showPreview = (activeTab as string) !== "editor-only";
 
   // 1. Render Login Screen
+  // The signed-in user and the account actions, for the profile menu on every screen.
+  const withAccount = (screen: React.ReactNode) => (
+    <AccountContext.Provider
+      value={currentUser ? {
+        user: currentUser,
+        openProfile: () => { setSettingsTab("profile"); handleLaunchApp("settings"); },
+        logout: () => { resetAppSidebar(); handleLogout(); },
+      } : null}
+    >
+      {screen}
+    </AccountContext.Provider>
+  );
+
   if (currentApp === "login" || !currentUser) {
     return <LoginPage onLogin={handleLogin} />;
   }
 
   // 2. Render Dashboard (new landing page)
   if (currentApp === "dashboard") {
-    return (
+    return withAccount(
       <Suspense fallback={<PageLoading />}>
         <DashboardPage
           user={currentUser}
           onNavigate={handleLaunchApp}
-          onLogout={handleLogout}
           onOpenDocuments={handleOpenDocumentsByStatus}
           onOpenDocument={handleOpenDocumentFromDashboard}
         />
@@ -662,7 +675,7 @@ export const App: React.FC = () => {
 
   // 4. Render Engineering Operations Suite Screen (Options 1-5 with Sidebar)
   if (currentApp === "operations") {
-    return (
+    return withAccount(
       <Suspense fallback={<PageLoading />}>
         <OperationsLayout
           activeTab={activeOpsTab}
@@ -677,7 +690,6 @@ export const App: React.FC = () => {
             }
             setCurrentApp("doccraft");
           }}
-          onLogout={handleLogout}
           onNavigate={handleLaunchApp}
         />
       </Suspense>
@@ -686,12 +698,11 @@ export const App: React.FC = () => {
 
   // 5. Render Settings Page
   if (currentApp === "settings") {
-    return (
+    return withAccount(
       <Suspense fallback={<PageLoading />}>
         <SettingsPage
           user={currentUser}
           onNavigate={handleLaunchApp}
-          onLogout={handleLogout}
           onUpdateAvatar={handleUpdateAvatar}
           activeTab={settingsTab}
           onTabChange={setSettingsTab}
@@ -702,12 +713,11 @@ export const App: React.FC = () => {
 
   // 5b. Render Coder (VS Code + Cline Agent embedded iframe)
   if (currentApp === "coder") {
-    return (
+    return withAccount(
       <Suspense fallback={<PageLoading />}>
         <CoderView
           user={currentUser}
           onNavigate={handleLaunchApp}
-          onLogout={handleLogout}
         />
       </Suspense>
     );
@@ -724,7 +734,7 @@ export const App: React.FC = () => {
     const scopeBase = userIsAdmin
       ? "All documents"
       : "Documents currently in progress";
-    return (
+    return withAccount(
       <>
         <DocumentsListPage
           user={currentUser}
@@ -744,7 +754,6 @@ export const App: React.FC = () => {
           onDelete={handleMoveDocumentToBin}
           onRestore={() => undefined}
           onNavigate={handleLaunchApp}
-          onLogout={handleLogout}
         />
         {toastMessage && (
           <div className="fixed bottom-6 right-6 z-50 bg-[var(--panel-alt)] text-[var(--text)] px-4 py-2.5 flex items-center gap-2 text-xs font-semibold animate-fade-in border border-[var(--success)]">
@@ -757,7 +766,7 @@ export const App: React.FC = () => {
   }
 
   // 7. Render DocCraft Studio (Document Automation Workspace)
-  return (
+  return withAccount(
     <div className="flex h-screen bg-[var(--bg)] text-[var(--text)] font-sans overflow-hidden">
       {/* ── Shared App Sidebar ── */}
       <AppSidebar
@@ -765,7 +774,6 @@ export const App: React.FC = () => {
         compact
         activeView="doccraft"
         onNavigate={handleLaunchApp}
-        onLogout={handleLogout}
       />
 
       {/* ── DocCraft content column ── */}
@@ -803,7 +811,6 @@ export const App: React.FC = () => {
         {/* Main Top Navigation */}
         <HeaderNav
           document={document}
-          user={currentUser}
           onUpdateMetadata={handleUpdateMetadata}
           onLoadTemplate={handleLoadTemplate}
           onUploadDocx={handleUploadDocx}
@@ -815,7 +822,6 @@ export const App: React.FC = () => {
           onOpenAiSettings={() => setAiSettingsOpen(true)}
           onBackToHub={handleBackToDocumentsList}
           onLaunchOperations={() => setCurrentApp("operations")}
-          onLogout={handleLogout}
         />
         {historyOpen && activeDocumentId && (
           <VersionHistoryModal

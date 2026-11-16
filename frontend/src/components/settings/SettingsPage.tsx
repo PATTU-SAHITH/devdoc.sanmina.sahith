@@ -20,6 +20,7 @@ import {
 import type { AppView, OperationsTab } from '../../types/appState';
 import type { UserProfile } from '../../types/auth';
 import { AppSidebar } from '../AppSidebar';
+import { ProfileMenu } from '../ProfileMenu';
 import {
   getStoredAiConfig,
   saveStoredAiConfig,
@@ -40,7 +41,6 @@ import { THEMES, setTheme, useTheme, type ThemeId } from '../../services/themeSe
 interface SettingsPageProps {
   user: UserProfile;
   onNavigate: (app: AppView, opsTab?: OperationsTab) => void;
-  onLogout: () => void;
   onUpdateAvatar: (avatarUrl?: string) => void;
   /** Controlled by App, so the tab survives leaving Settings and coming back. */
   activeTab: SettingsTab;
@@ -141,7 +141,7 @@ function InfoBanner({ text }: { text: string }) {
 }
 
 /* ─── Main Component ─── */
-export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onNavigate, onLogout, onUpdateAvatar, activeTab: requestedTab, onTabChange }) => {
+export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onNavigate, onUpdateAvatar, activeTab: requestedTab, onTabChange }) => {
   const theme = useTheme();
   // System & Storage is open to everyone: the VS Code address (this
   // browser only) and the session audit log - everyone's for an admin,
@@ -182,7 +182,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onNavigate, on
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden">
-      <AppSidebar user={user} activeView="settings" onNavigate={onNavigate} onLogout={onLogout} />
+      <AppSidebar user={user} activeView="settings" onNavigate={onNavigate} />
 
       <div className="flex-1 flex overflow-hidden">
         {/* Settings Sub-Tab Panel */}
@@ -213,6 +213,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onNavigate, on
 
         {/* Settings Content */}
         <main className="flex-1 overflow-y-auto p-8 bg-slate-50">
+          <div className="flex justify-end -mt-4 mb-4">
+            <ProfileMenu />
+          </div>
           <div className="max-w-2xl mx-auto space-y-8">
 
             {/* PROFILE */}

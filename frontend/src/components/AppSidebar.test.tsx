@@ -11,21 +11,21 @@ let host: HTMLElement | null = null;
 
 /** Renders the sidebar next to a stand-in for the page content, the way
  * every screen lays it out. */
-function renderScreen(onNavigate = vi.fn(), onLogout = vi.fn()) {
+function renderScreen(onNavigate = vi.fn()) {
   host = document.createElement('div');
   document.body.appendChild(host);
   root = createRoot(host);
   act(() =>
     root!.render(
       <div>
-        <AppSidebar user={makeUser()} activeView="dashboard" onNavigate={onNavigate} onLogout={onLogout} />
+        <AppSidebar user={makeUser()} activeView="dashboard" onNavigate={onNavigate} />
         <main>
           <p>page content</p>
         </main>
       </div>,
     ),
   );
-  return { onNavigate, onLogout };
+  return { onNavigate };
 }
 
 function unmount() {
@@ -38,6 +38,7 @@ function unmount() {
 const toggle = () => host!.querySelector<HTMLButtonElement>('button[aria-controls="app-sidebar-panel"]')!;
 const isOpen = () => toggle().getAttribute('aria-expanded') === 'true';
 const panel = () => host!.querySelector<HTMLElement>('#app-sidebar-panel')!;
+const welcomeButton = () => host!.querySelector<HTMLButtonElement>('button[aria-label="Welcome guide"]')!;
 const navButton = (label: string) =>
   [...host!.querySelectorAll<HTMLButtonElement>('nav button')].find((b) => b.textContent?.includes(label))!;
 const pointerDown = (el: Element) => act(() => { el.dispatchEvent(new Event('pointerdown', { bubbles: true })); });
@@ -58,7 +59,7 @@ function showScreen(name: string | null, onNavigate = vi.fn()) {
         <p>loading…</p>
       ) : (
         <div key={name}>
-          <AppSidebar user={makeUser()} activeView="dashboard" onNavigate={onNavigate} onLogout={vi.fn()} />
+          <AppSidebar user={makeUser()} activeView="dashboard" onNavigate={onNavigate} />
           <main>
             <p>{name} content</p>
           </main>
@@ -184,14 +185,11 @@ describe('AppSidebar open/close behaviour', () => {
     expect(host!.textContent).toContain('DevDoc');
   });
 
-  it('closed: hidden labels and the sign-out button are out of the keyboard and screen-reader path', () => {
+  it('closed: buttons keep a name for screen readers even with the label faded', () => {
     renderScreen();
     closeIt();
-    const signOut = host!.querySelector<HTMLButtonElement>('button[title="Sign Out"]')!;
-    expect(signOut.tabIndex).toBe(-1);
-    expect(signOut.getAttribute('aria-hidden')).toBe('true');
-    // nav buttons keep a name for screen readers even with the label faded
     expect(navButton('Coder').getAttribute('aria-label')).toBe('Coder');
+    expect(welcomeButton().getAttribute('aria-label')).toBe('Welcome guide');
   });
 
   it('has no Data Management entry, even for an admin (it lives in Settings → System & Storage)', () => {
@@ -199,19 +197,17 @@ describe('AppSidebar open/close behaviour', () => {
     host = document.createElement('div');
     document.body.appendChild(host);
     root = createRoot(host);
-    act(() => root!.render(<AppSidebar user={makeUser({ role: 'admin' })} activeView="settings" onNavigate={vi.fn()} onLogout={vi.fn()} />));
+    act(() => root!.render(<AppSidebar user={makeUser({ role: 'admin' })} activeView="settings" onNavigate={vi.fn()} />));
     const labels = [...host.querySelectorAll('nav button')].map((b) => b.getAttribute('aria-label'));
     expect(labels).toContain('Settings');
     expect(labels).not.toContain('Data Management');
   });
 
-  it('signing out leaves the bar open for the next sign-in', () => {
-    const { onLogout } = renderScreen();
+  it('resetAppSidebar (called on sign-out) leaves the bar open for the next sign-in', () => {
+    renderScreen();
     closeIt();
-    click(panel()); // reopen so the sign-out button is reachable
-    click(host!.querySelector('button[title="Sign Out"]')!);
-    expect(onLogout).toHaveBeenCalled();
     unmount();
+    resetAppSidebar();
     renderScreen();
     expect(isOpen()).toBe(true);
   });
@@ -229,5 +225,22 @@ describe('AppSidebar entries', () => {
         expect.stringContaining('Reviewers Log'),
       ]),
     );
+  });
+});
+
+describe('AppSidebar footer', () => {
+  it('has the Welcome guide instead of the user and sign-out (those live in the profile menu)', () => {
+    renderScreen();
+    const user = makeUser();
+    expect(host!.textContent).not.toContain(user.name);
+    expect(host!.querySelector('button[title="Sign Out"]')).toBeNull();
+    expect(welcomeButton().textContent).toContain('Welcome guide');
+  });
+
+  it('the Welcome guide button opens the guide', () => {
+    renderScreen();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    click(welcomeButton());
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Welcome');
   });
 });

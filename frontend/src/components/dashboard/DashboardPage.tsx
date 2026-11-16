@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Activity, FileText, GitBranch, HelpCircle, UploadCloud } from 'lucide-react';
+import { Activity, FileText, GitBranch, UploadCloud } from 'lucide-react';
 import type { UserProfile } from '../../types/auth';
 import type { AppView, OperationsTab } from '../../types/appState';
 import type { DocStatus } from '../../types/document';
@@ -12,6 +12,7 @@ import { isReleasesAvailable, loadReleaseActivity } from '../../services/release
 import { navigateTo, releasesPath } from '../../services/releasesRoute';
 import { mergeActivity, type ReleaseActivityEntry } from '../../services/recentActivity';
 import { AppSidebar } from '../AppSidebar';
+import { ProfileMenu } from '../ProfileMenu';
 import { WelcomeModal } from '../onboarding/WelcomeModal';
 import { hasSeenWelcome, markWelcomeSeen } from '../../services/onboardingService';
 
@@ -24,7 +25,6 @@ import { hasSeenWelcome, markWelcomeSeen } from '../../services/onboardingServic
 interface DashboardPageProps {
   user: UserProfile;
   onNavigate: (app: AppView, opsTab?: OperationsTab) => void;
-  onLogout: () => void;
   /** Opens the documents list, optionally narrowed to one status. */
   onOpenDocuments: (status: DocumentFilter | null) => void;
   onOpenDocument: (id: string) => void;
@@ -118,7 +118,7 @@ const StatusRing: React.FC<{ stats: DocumentStats }> = ({ stats }) => {
   );
 };
 
-export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onNavigate, onLogout, onOpenDocuments, onOpenDocument }) => {
+export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onNavigate, onOpenDocuments, onOpenDocument }) => {
   const [welcomeOpen, setWelcomeOpen] = useState(() => !hasSeenWelcome());
   const [stats, setStats] = useState<DocumentStats | null>(null);
   const [statsError, setStatsError] = useState('');
@@ -165,24 +165,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onNavigate, 
 
   return (
     <div className="flex h-screen bg-[var(--bg)] text-[var(--text)] overflow-hidden">
-      <AppSidebar user={user} activeView="dashboard" onNavigate={onNavigate} onLogout={onLogout} />
+      <AppSidebar user={user} activeView="dashboard" onNavigate={onNavigate} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="flex items-center justify-between gap-4 px-7 py-5 border-b border-[var(--border)] bg-[var(--panel)] shrink-0">
+        {/* A brand-red rule under the header (approved design). */}
+        <header className="flex items-center justify-between gap-4 px-7 py-5 border-b-2 border-[var(--brand)] bg-[var(--panel)] shrink-0">
           <div>
             <div className={eyebrow}>Dashboard</div>
-            <h1 className="text-xl font-bold text-[var(--text)] mt-1">{getGreeting()}, {user.name.split(' ')[0]}</h1>
+            <h1 className="text-xl font-bold text-[var(--text)] mt-1">{getGreeting()}, <span className="text-[var(--accent-text)]">{user.name.split(' ')[0]}</span></h1>
           </div>
-          <button type="button" onClick={() => setWelcomeOpen(true)} className="ui-button ui-button-icon" title="Show the welcome guide again" aria-label="Help">
-            <HelpCircle className="w-4 h-4" />
-          </button>
+          <ProfileMenu />
         </header>
 
         <main className="flex-1 overflow-y-auto p-6 md:p-7 space-y-6">
           {statsError && <p role="alert" className="rounded-lg border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] px-3 py-2 text-xs text-[var(--danger)]">Could not load the document counts: {statsError}</p>}
 
           <section aria-label="Document counts" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <StatCard label="Total documents" value={count(stats?.total)} note="Every document created, except those in the Doc Bin" onOpen={() => onOpenDocuments(null)} />
+            <StatCard label="Total documents" value={count(stats?.total)} tone="text-[var(--accent-text)]" note="Every document created, except those in the Doc Bin" onOpen={() => onOpenDocuments(null)} />
             <StatCard label="Approved" value={count(stats?.byStatus.APPROVED)} tone="text-[var(--success)]"
               note={admin ? 'Approved by their reviewers' : 'Approved documents open for admins only'}
               onOpen={admin ? () => onOpenDocuments('APPROVED') : undefined} />

@@ -18,7 +18,9 @@
  *        amber, yellow, orange     -> warning
  *   So a screen follows the theme without naming the theme, and red stays rare.
  *
- * The brand red (--accent) is a starting value; set the company's exact red here.
+ * The brand red is #EE293D, the median of the logo's reds (#EE3943, #EE293E, #EE293D, #E4002B,
+ * #EE293D). It sits just under 4.5:1 behind small white text and as small text on white, so
+ * buttons and small red text use #D41F33, a slightly deeper shade of it.
  */
 
 /* Which scale each Tailwind colour uses: the same in every theme. Declared on
@@ -65,9 +67,10 @@
   --text: #F5F5F5;
   --text-dim: #A3A3A3;
   --text-faint: #8F8F8F;
-  --accent: #D71920;          /* fills: main buttons, active bars */
-  --accent-hover: #E0353A;
-  --accent-text: #F2555A;     /* red text and lines on black: a lighter tint of the same red */
+  --brand: #EE293D;           /* the logo red: rules, bars, large marks */
+  --accent: #D41F33;          /* fills behind white text: main buttons, badges */
+  --accent-hover: #EE293D;
+  --accent-text: #F04A5B;     /* small red text on black and dark panels: a touch lighter for contrast */
   --on-accent: #FFFFFF;
   --on-warning: #111111;     /* text on an amber fill */
   --success: #4ADE80;
@@ -75,7 +78,7 @@
   --amber: #FBBF24;
   --blue: var(--accent-text); /* older screens name the accent "blue" */
   --purple: #A3A3A3;
-  --pink: #F2555A;
+  --pink: var(--accent-text);
   --white: #F5F5F5;
   --signal-gradient: linear-gradient(var(--accent), var(--accent));
   --overlay: rgba(0, 0, 0, 0.6);
@@ -88,9 +91,9 @@
   --muted-400: #8F8F8F; --muted-500: #525252; --muted-600: #404040; --muted-700: #3A3A3A;
   --muted-800: #E5E5E5; --muted-900: #F5F5F5; --muted-950: #FAFAFA;
 
-  --accent-50: #2A1213; --accent-100: #3A1517; --accent-200: #5C1D21; --accent-300: #8A2A2F;
-  --accent-400: #F2555A; --accent-500: #F2555A; --accent-600: #D71920; --accent-700: #B3141A;
-  --accent-800: #F67A7E; --accent-900: #FBA5A8; --accent-950: #FDD0D1;
+  --accent-50: #2A1215; --accent-100: #3A1519; --accent-200: #5C1D24; --accent-300: #8A2833;
+  --accent-400: #F04A5B; --accent-500: #EE293D; --accent-600: #D41F33; --accent-700: #B31A2B;
+  --accent-800: #F47A87; --accent-900: #F9AEB6; --accent-950: #FDD7DB;
 
   --danger-50: #2A1414; --danger-100: #3A1818; --danger-200: #5C2020; --danger-300: #8A2C2C;
   --danger-400: #FF6B6B; --danger-500: #F87171; --danger-600: #DC2626; --danger-700: #B91C1C;
@@ -116,9 +119,10 @@
   --text: #111111;
   --text-dim: #5C5C5C;
   --text-faint: #6B6B6B;
-  --accent: #D71920;
-  --accent-hover: #B3141A;
-  --accent-text: #B3141A;     /* red text on white: one shade deeper, for contrast */
+  --brand: #EE293D;
+  --accent: #D41F33;
+  --accent-hover: #B31A2B;
+  --accent-text: #D41F33;     /* small red text on white */
   --on-accent: #FFFFFF;
   --on-warning: #111111;     /* text on an amber fill */
   --success: #146C2E;
@@ -126,7 +130,7 @@
   --amber: #8A5300;
   --blue: var(--accent-text);
   --purple: #5C5C5C;
-  --pink: #B3141A;
+  --pink: var(--accent-text);
   --white: #111111;
   --signal-gradient: linear-gradient(var(--accent), var(--accent));
   --overlay: rgba(17, 17, 17, 0.4);
@@ -139,9 +143,9 @@
   --muted-400: #707070; --muted-500: #5C5C5C; --muted-600: #404040; --muted-700: #333333;
   --muted-800: #262626; --muted-900: #171717; --muted-950: #0A0A0A;
 
-  --accent-50: #FEF2F2; --accent-100: #FDE3E3; --accent-200: #FBC9CA; --accent-300: #F59EA0;
-  --accent-400: #E0353A; --accent-500: #D71920; --accent-600: #D71920; --accent-700: #B3141A;
-  --accent-800: #8E1015; --accent-900: #6B0C10; --accent-950: #4A080B;
+  --accent-50: #FEF1F2; --accent-100: #FDE2E5; --accent-200: #FAC5CB; --accent-300: #F598A2;
+  --accent-400: #F0606F; --accent-500: #EE293D; --accent-600: #D41F33; --accent-700: #B31A2B;
+  --accent-800: #8F1522; --accent-900: #6B1019; --accent-950: #470A10;
 
   --danger-50: #FEF2F2; --danger-100: #FEE2E2; --danger-200: #FECACA; --danger-300: #FCA5A5;
   --danger-400: #F87171; --danger-500: #EF4444; --danger-600: #DC2626; --danger-700: #B91C1C;
@@ -162,7 +166,7 @@
   --doc-paper-text: #1A1A1A;
   --doc-paper-dim: #444444;
   --doc-primary: #111111;
-  --doc-rule: var(--accent);
+  --doc-rule: var(--brand);
   --doc-border: #DDDDDD;
   --doc-table-header-bg: #F5F5F5;
   --doc-code-bg: #F7F7F7;

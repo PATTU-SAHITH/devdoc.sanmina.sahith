@@ -17,22 +17,20 @@ import {
   AlertTriangle,
   FileSpreadsheet,
   Bot,
-  LogOut,
   RefreshCw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import type { DocumentModel } from '../types/document';
-import type { UserProfile } from '../types/auth';
 import { TEMPLATE_REGISTRY } from '../templates';
 import { exportToGoogleDoc } from '../exporters/googleDocsExport';
 import { GoogleAuthCancelledError, GoogleClientIdMissingError } from '../services/googleAuthService';
 import { GoogleClientIdModal } from './google/GoogleClientIdModal';
 import { recordDriveExport } from '../services/googleDriveStatusService';
 import { exportDocToVsCodeSpecs } from '../services/workspaceFileService';
+import { ProfileMenu } from './ProfileMenu';
 
 interface HeaderNavProps {
   document: DocumentModel;
-  user?: UserProfile;
   onUpdateMetadata: (updates: Partial<DocumentModel['metadata']>) => void;
   onLoadTemplate: (templateId: string, isBlank?: boolean) => void;
   onUploadDocx: (file: File) => void;
@@ -44,12 +42,10 @@ interface HeaderNavProps {
   onOpenAiSettings: () => void;
   onBackToHub?: () => void;
   onLaunchOperations?: () => void;
-  onLogout?: () => void;
 }
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({
   document,
-  user,
   onLoadTemplate,
   onUploadDocx,
   onExportJson,
@@ -58,11 +54,9 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   onOpenAiSettings,
   onBackToHub,
   onLaunchOperations,
-  onLogout,
 }) => {
   const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false);
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [isExportingGoogleDoc, setIsExportingGoogleDoc] = useState(false);
@@ -483,60 +477,8 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
           )}
         </div>
 
-        {/* User Profile Avatar / Logout Dropdown */}
-        {user && (
-          <div className="relative ml-1">
-            <button
-              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className={`w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center text-xs font-bold text-white shadow-xs ring-1 ring-slate-200`}
-              title={user.name}
-            >
-              {user.initials}
-            </button>
-
-            {userDropdownOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setUserDropdownOpen(false)} 
-                />
-                <div className="absolute right-0 mt-2 w-56 rounded-xl glass-dropdown z-50 p-2 animate-fade-in space-y-2 text-left">
-                  <div className="p-2 border-b border-slate-200">
-                    <div className="text-xs font-bold text-slate-900">{user.name}</div>
-                    <div className="text-[10px] text-slate-500">{user.designation}</div>
-                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">{user.email}</div>
-                  </div>
-
-                  {onLaunchOperations && (
-                    <button
-                      onClick={() => {
-                        onLaunchOperations();
-                        setUserDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 rounded-lg transition-colors text-left"
-                    >
-                      <Layers className="w-3.5 h-3.5 text-purple-600" />
-                      <span>Operations Suite</span>
-                    </button>
-                  )}
-
-                  {onLogout && (
-                    <button
-                      onClick={() => {
-                        onLogout();
-                        setUserDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg transition-colors text-left font-semibold"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>Log Out</span>
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
+        {/* The profile menu (Profile, Log out), the same on every screen. */}
+        <div className="ml-1"><ProfileMenu compact /></div>
       </div>
 
       {showGoogleClientIdModal && (

@@ -4,6 +4,7 @@ import type { UserProfile } from '../../types/auth';
 import type { DocumentModel } from '../../types/document';
 
 import { AppSidebar } from '../AppSidebar';
+import { ProfileMenu } from '../ProfileMenu';
 import { ReleaseMaster } from './ReleaseMaster';
 import { ReviewersLog } from './ReviewersLog';
 import { TestCaseManager } from './TestCaseManager';
@@ -15,7 +16,6 @@ interface OperationsLayoutProps {
   currentDocument?: DocumentModel;
   onBackToHub: () => void;
   onLaunchDocCraft: (docId?: string, doc?: DocumentModel) => void;
-  onLogout: () => void;
   onNavigate: (app: AppView, opsTab?: OperationsTab) => void;
 }
 
@@ -24,7 +24,6 @@ export const OperationsLayout: React.FC<OperationsLayoutProps> = ({
   user,
   currentDocument,
   onLaunchDocCraft,
-  onLogout,
   onNavigate,
 }) => {
   return (
@@ -34,10 +33,13 @@ export const OperationsLayout: React.FC<OperationsLayoutProps> = ({
         activeView="operations"
         activeOpsTab={activeTab}
         onNavigate={onNavigate}
-        onLogout={onLogout}
       />
 
       <main className="flex-1 flex flex-col overflow-y-auto bg-[var(--bg)] p-6 md:p-8">
+        {/* These screens have no header row of their own: a slim bar for the profile menu. */}
+        <div className="flex justify-end -mt-2 mb-4 shrink-0">
+          <ProfileMenu />
+        </div>
         {activeTab === 'releases' && (
           <ReleaseMaster />
         )}

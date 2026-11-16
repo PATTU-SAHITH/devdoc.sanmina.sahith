@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { spawnServer, stopServer, waitForPortsFree } from './backendHarness';
+import { signOut } from './helpers';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -84,8 +85,7 @@ test('real backend: the right password signs in, and logout revokes the session 
   const meWhileIn = await page.request.get(`http://localhost:${API_PORT}/api/auth/me`);
   expect(meWhileIn.ok()).toBe(true);
 
-  // Signing out is in the sidebar (the dashboard header has no second copy).
-  await page.getByRole('button', { name: /sign ?out/i }).click();
+  await signOut(page); // the profile menu, top right
   await expect(page.getByRole('button', { name: /sign in to platform/i })).toBeVisible();
   const meAfterLogout = await page.request.get(`http://localhost:${API_PORT}/api/auth/me`);
   expect(meAfterLogout.status()).toBe(401);

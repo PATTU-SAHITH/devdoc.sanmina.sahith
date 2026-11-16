@@ -326,7 +326,21 @@ test.describe('first-run welcome guide', () => {
     await expect(dialog.getByText('You can see everything, as an admin')).toHaveCount(0);
     await dialog.getByRole('button', { name: /Got it/ }).click();
 
-    await page.getByRole('button', { name: 'Help' }).click();
+    await page.getByRole('button', { name: 'Welcome guide' }).click(); // bottom of the sidebar
     await expect(page.getByRole('dialog', { name: /Welcome to DevDoc Studio/ })).toBeVisible();
+  });
+});
+
+test.describe('profile menu (top right, every screen)', () => {
+  test('Profile opens Settings → Profile, and the menu is on the other screens too', async ({ page }) => {
+    await signInAs(page);
+    await page.goto('/');
+    await page.getByRole('button', { name: /^Profile menu for/ }).click();
+    await page.getByRole('menuitem', { name: 'Profile' }).click();
+    await expect(page.getByText('Your account information from the active session.')).toBeVisible();
+    for (const screen of ['Test Management', 'Release Master', 'Reviewers Log', 'Document Editor']) {
+      await page.getByRole('button', { name: screen, exact: true }).first().click();
+      await expect(page.getByRole('button', { name: /^Profile menu for/ })).toBeVisible();
+    }
   });
 });

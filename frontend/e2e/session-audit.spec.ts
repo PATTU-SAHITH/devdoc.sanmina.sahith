@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { signInThroughBackend, startStack, type Stack } from './backendHarness';
-import { openSystemAndStorage } from './helpers';
+import { openSystemAndStorage, signOut } from './helpers';
 
 // DDS-SRS-011: the server records every sign-in and sign-out, for every
 // user on every machine. Admins read everyone's, anyone else only their own.
@@ -19,7 +19,7 @@ test('an admin sees real sign-ins from other browsers, with sign-outs', async ({
   const otherContext = await browser.newContext();
   const other = await otherContext.newPage();
   await signInThroughBackend(other, stack, lead);
-  await other.getByRole('button', { name: /log ?out|sign ?out/i }).first().click();
+  await signOut(other);
   await expect(other.getByPlaceholder('Enter your password')).toBeVisible();
   await otherContext.close();
 
