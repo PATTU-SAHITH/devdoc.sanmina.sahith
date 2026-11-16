@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect, type Page } from '@playwright/test';
 import { signInThroughBackend, startStack, type Stack } from './backendHarness';
+import { menuAction } from './helpers';
 
 // Test Management requirements not covered elsewhere, against the real API:
 // 017 (manual execution statuses), 029 (code editor + AI generation),
@@ -65,10 +66,10 @@ test('017: each manual execution status can be set on a case in a run, and is sa
   await expect(select).toHaveValue('Blocked');
 });
 
-test('029: Generate via AI adds test cases to the suite, and they are saved', async ({ page }) => {
+test('029: Generate with AI adds test cases to the suite, and they are saved', async ({ page }) => {
   await openTestManagement(page);
   const before = (await (await page.request.get(`${stack.apiUrl}/api/test-management`)).json()).suites[0].testCases.length;
-  await page.getByRole('button', { name: 'Generate via AI' }).click();
+  await page.getByRole('button', { name: 'Generate with AI' }).click();
   await page.getByRole('button', { name: 'Generate Test Cases' }).click();
   const toast = page.getByText(/^✅ \d+ test cases generated!$/);
   await expect(toast).toBeVisible();
@@ -91,14 +92,14 @@ test('029: the Coder screen embeds the code editor through the same-origin /vsco
 test('032: a suite is sent to the code editor\'s folder as .robot and as .md', async ({ page }) => {
   await openTestManagement(page);
   const suites = path.join(dir, 'vscode-workspace', 'test-suites');
-  await page.getByRole('button', { name: 'Export .robot' }).click();
+  await menuAction(page, 'More', 'Send as Robot suite (.robot)');
   await expect(page.getByText(/saved to VS Code workspace/)).toBeVisible();
   const robot = readdirSync(suites).find((f) => f.endsWith('.robot'));
   expect(robot).toBeTruthy();
   const robotText = readFileSync(path.join(suites, robot!), 'utf8');
   expect(robotText).toContain('*** Test Cases ***');
 
-  await page.getByRole('button', { name: 'Export .md' }).click();
+  await menuAction(page, 'More', 'Send to VS Code (.md)');
   const findMd = () => readdirSync(suites).find((f) => f.endsWith('.md'));
   await expect.poll(findMd).toBeTruthy();
   const md = findMd()!;
@@ -149,7 +150,7 @@ test('023: a run shows a pass/fail donut and its pass %', async ({ page }) => {
   await expect(page.getByText('80%', { exact: true }).first()).toBeVisible();
 });
 
-test('run page buttons: Edit, Close / Reopen, Rerun and Execute Automated Tests', async ({ page }) => {
+test('run page buttons: Edit, Close / Reopen, Rerun and Run Test', async ({ page }) => {
   await openTestManagement(page);
   const [user] = stack.users;
   const runs = async () => (await (await page.request.get(`${stack.apiUrl}/api/test-management`)).json()).runs as
@@ -187,8 +188,8 @@ test('run page buttons: Edit, Close / Reopen, Rerun and Execute Automated Tests'
     return r ? [r.status, r.caseResults?.every((c) => c.status === 'Untested'), (r.caseResults?.length ?? 0) > 0] : null;
   }).toEqual(['In Progress', true, true]);
 
-  // Execute Automated Tests asks where to run.
-  await page.getByRole('button', { name: 'Execute Automated Tests' }).first().click();
+  // Run Test (on the run page) asks where to run.
+  await page.getByRole('button', { name: 'Run Test', exact: true }).click();
   await expect(page.getByRole('dialog', { name: /^Run / })).toBeVisible();
 });
 
@@ -199,7 +200,7 @@ test('Import output.xml: each test\'s own status and real time, skipped kept as 
   const second = (await (await page.request.get(`${stack.apiUrl}/api/test-management`)).json()).suites[1];
   await page.getByRole('button', { name: second.title }).first().click();
   await page.getByRole('button', { name: /Test Runs/ }).first().click();
-  await page.getByRole('button', { name: 'Import output.xml' }).click();
+  await menuAction(page, 'Results', 'Import Robot output.xml…');
   await page.locator('textarea').last().fill(xml);
   await page.getByRole('button', { name: 'Process & Save' }).click();
   await expect(page.getByText('✅ Imported 4 results from Robot XML.')).toBeVisible();

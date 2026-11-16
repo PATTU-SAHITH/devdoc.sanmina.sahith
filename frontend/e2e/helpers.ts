@@ -31,3 +31,15 @@ export async function openSystemAndStorage(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await page.getByRole('button', { name: /System & Storage/i }).click();
 }
+
+/** Opens a Test Management toolbar menu ("Run Test", "More", "Results") and picks an item. */
+export async function menuAction(page: Page, menu: string, item: string | RegExp): Promise<void> {
+  await page.getByRole('button', { name: menu, exact: true }).first().click();
+  await page.getByRole('menuitem', { name: item }).click();
+}
+
+/** Opens the More menu so its "Test cases from CSV, JSON or XML…" file picker is on the page. */
+export async function importCasesInput(page: Page) {
+  await page.getByRole('button', { name: 'More', exact: true }).first().click();
+  return page.getByLabel('Test cases from CSV, JSON or XML…');
+}

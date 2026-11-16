@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { spawnServer, stopServer, waitForPortsFree } from './backendHarness';
+import { menuAction } from './helpers';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -74,7 +75,7 @@ test('clicking Run Test starts a remote run that shows up immediately as In Prog
   await expect(page.getByText(new RegExp(`Good (Morning|Afternoon|Evening)`))).toBeVisible();
 
   await page.getByRole('button', { name: 'Test Management', exact: true }).click();
-  await page.getByRole('button', { name: 'Run Test' }).click();
+  await menuAction(page, 'Run Test', /Run Test now/);
   // No servers registered: the simulated Test PC is the only choice.
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('No test servers are registered yet.', { exact: false })).toBeVisible();
@@ -117,7 +118,7 @@ test('Run Test sends the suite to a registered test server and follows it live t
   page.on('request', (r) => { if (/\/api\/test-exec\/runs\/[^/]+/.test(r.url())) statusRequests.push(new URL(r.url()).pathname); });
 
   await page.getByRole('button', { name: 'Test Management', exact: true }).click();
-  await page.getByRole('button', { name: 'Run Test' }).click();
+  await menuAction(page, 'Run Test', /Run Test now/);
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('radio', { name: /Fake Lab PC/ })).toBeChecked();
   await dialog.getByRole('button', { name: 'Start run' }).click();
@@ -151,7 +152,7 @@ test('a scheduled run fires on the server and its results show up (DDS-SRS-028)'
   await page.getByRole('button', { name: 'Test Management', exact: true }).click();
 
   // "Fake Lab PC" was registered by the previous test.
-  await page.getByRole('button', { name: 'Schedule' }).first().click();
+  await menuAction(page, 'Run Test', /Schedule/);
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('No scheduled runs for this suite yet.')).toBeVisible();
   await dialog.getByLabel('Repeat').selectOption('weekly');

@@ -21,6 +21,7 @@ import { RunEditModal } from './RunEditModal';
 import { getStoredSession } from '../../services/authService';
 import { rerunOf, closeRun, reopenRun } from '../../services/runActions';
 import { ScheduleModal } from './ScheduleModal';
+import { ActionMenu } from './ActionMenu';
 import { TrendCharts } from './TrendCharts';
 import { buildRobotSuiteText } from '../../services/robotSuiteBuilder';
 import { searchLibrary, saveToLibrary, removeFromLibrary, testCaseLibrary } from '../../services/testCaseLibraryService';
@@ -52,9 +53,8 @@ import {
   Trash2, Edit3, Download, Upload, X, Check, Clock,
   CheckCircle2, XCircle, MinusCircle, SkipForward, RefreshCw,
   ClipboardList, FileBarChart, Search, ArrowUpDown, Zap, Bot, FileCode2,
-  FileSpreadsheet, Folder,
+  Folder,
   HelpCircle, ImagePlus, Library, BookmarkPlus, Paperclip, Bug,
-  CalendarClock,
   RotateCcw,
 } from 'lucide-react';
 
@@ -314,7 +314,7 @@ const LoadPreviousTestCaseDropdown: React.FC<{ onPick: (tc: TestCaseItem) => voi
   return (
     <div ref={ref} className="relative inline-block">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex items-center gap-1 text-[var(--blue)] hover:underline font-medium">
-        <Library className="w-3.5 h-3.5" /> Load Previous Test Case
+        <Library className="w-3.5 h-3.5" /> Add from library
       </button>
       {open && (
         <div className="absolute z-20 mt-1 w-80 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden text-left">
@@ -575,6 +575,15 @@ const SAMPLE_TA_DOC: DocumentModel = {
 type MainView     = 'test-cases' | 'runs' | 'milestones' | 'reports';
 type RunDetailTab = 'results' | 'activity' | 'progress' | 'defects' | 'compare';
 
+
+/** "Run Test ▾": run the open suite now, or schedule it (the same menu on the Cases and Runs tabs). */
+const RunTestMenu: React.FC<{ suite: TestSuiteItem | undefined; onRunTest: (suite: TestSuiteItem) => void; onSchedule: (suite: TestSuiteItem) => void }> = ({ suite, onRunTest, onSchedule }) => (
+  <ActionMenu label="Run Test" icon={<Play aria-hidden className="w-3.5 h-3.5" />} disabled={!suite} title={suite ? undefined : 'Open a test suite first'}
+    groups={[{ items: [
+      { label: 'Run Test now', hint: 'Runs this suite on a test server', onSelect: () => suite && onRunTest(suite) },
+      { label: 'Schedule…', hint: 'Run it daily, weekly or on a cron', onSelect: () => suite && onSchedule(suite) },
+    ] }]} />
+);
 
 // ── Add Test Run Modal ─────────────────────────────────────────────────────────
 const AddTestRunModal: React.FC<{
@@ -1065,13 +1074,12 @@ const TestCasesView: React.FC<{
   onExportSuiteMd: () => void;
   onExportRobotSuite: (suite: TestSuiteItem) => void;
   onExportProtocolExcel: () => void;
-  onImportProtocolExcel: (file: File) => void;
   onShowAiModal: () => void;
   onShowBackAnnotateModal: () => void;
   onRunTest: (suite: TestSuiteItem) => void;
   onSchedule: (suite: TestSuiteItem) => void;
 }> = ({ suites, selectedSuiteId, projects, visibleSuites, onSelectSuite, onUpdateSuites, onShowToast,
-        onExportSuiteMd, onExportRobotSuite, onExportProtocolExcel, onImportProtocolExcel, onShowAiModal, onShowBackAnnotateModal, onRunTest, onSchedule }) => {
+        onExportSuiteMd, onExportRobotSuite, onExportProtocolExcel, onShowAiModal, onShowBackAnnotateModal, onRunTest, onSchedule }) => {
   const [collapseAll, setCollapseAll]       = useState(false);
   const [expandedCaseId, setExpandedCaseId] = useState<string | null>(null);
   const [showAddCase, setShowAddCase]       = useState(false);
@@ -1103,6 +1111,8 @@ const TestCasesView: React.FC<{
   // No fallback to the first suite: with a project picked, that could be a
   // suite from another project.
   const selectedSuite = suites.find(s => s.id === selectedSuiteId);
+  // Actions that work on one suite are greyed out until a suite is open.
+  const needSuite = selectedSuite ? undefined : 'Open a test suite first';
   const cases = (selectedSuite?.testCases || []).filter(tc =>
     (showDeletedCases || !tc.isDeleted) &&
     (!searchQ || tc.title.toLowerCase().includes(searchQ.toLowerCase()) ||
@@ -1316,55 +1326,34 @@ const TestCasesView: React.FC<{
             </button>
           )}
         </div>
+        {/* Grouped actions (approved design): the everyday ones stay visible, the rest live in menus. */}
         <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={onShowAiModal} className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white rounded-lg text-xs font-semibold shadow-xs">
-            <Bot className="w-3.5 h-3.5" /> Generate via AI
+          <button onClick={onShowAiModal} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--panel)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--text-faint)] rounded-lg text-xs font-semibold">
+            <Bot className="w-3.5 h-3.5" /> Generate with AI
           </button>
-          <button onClick={() => setShowLibraryModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold shadow-xs">
-            <Library className="w-3.5 h-3.5" /> Import from Library
-          </button>
-          <button onClick={() => setShowSuiteLibraryModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold shadow-xs">
-            <Folder className="w-3.5 h-3.5" /> Load Suite from Library
-          </button>
-          <button onClick={onShowBackAnnotateModal} className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold shadow-xs transition-colors">
-            <RefreshCw className="w-3.5 h-3.5" /> Back-Annotate (VS Code)
-          </button>
-          <button onClick={() => selectedSuite && onRunTest(selectedSuite)} disabled={!selectedSuite} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-[var(--on-warning)]! rounded-lg text-xs font-bold shadow-xs disabled:opacity-50">
-            <Play className="w-3.5 h-3.5" /> Run Test
-          </button>
-          <button onClick={() => selectedSuite && onSchedule(selectedSuite)} disabled={!selectedSuite} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--panel-alt)] text-[var(--text)] border border-[var(--border)] rounded-lg text-xs font-semibold disabled:opacity-50">
-            <CalendarClock className="w-3.5 h-3.5" /> Schedule
-          </button>
-          {selectedSuite && <>
-            <button onClick={onExportSuiteMd} className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg text-xs font-semibold">
-              <FileCode2 className="w-3.5 h-3.5" /> Export .md
-            </button>
-            <button onClick={() => onExportRobotSuite(selectedSuite)} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold">
-              <FileCode2 className="w-3.5 h-3.5" /> Export .robot
-            </button>
-            <button onClick={handleSaveSuiteToLibrary} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold">
-              <BookmarkPlus className="w-3.5 h-3.5" /> Save Suite to Library
-            </button>
-            <select aria-label="Export test cases" value="" onChange={e => { if (e.target.value) handleExportCases(e.target.value as ExchangeFormat); }}
-              className="px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer">
-              <option value="">Export cases…</option>
-              <option value="csv">as CSV</option>
-              <option value="json">as JSON</option>
-              <option value="xml">as XML</option>
-            </select>
-            <label className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:border-blue-400">
-              <Upload className="w-3.5 h-3.5" /> Import cases
-              <input type="file" accept=".csv,.json,.xml" className="hidden" aria-label="Import test cases (CSV, JSON or XML)"
-                onChange={e => { const f = e.target.files?.[0]; if (f) void handleImportCases(f); e.target.value = ''; }} />
-            </label>
-          </>}
-          <button onClick={onExportProtocolExcel} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--panel-alt)] hover:border-[var(--blue)] text-[var(--blue)] border border-[var(--border)] rounded-lg text-xs font-semibold shadow-xs transition-colors">
-            <FileSpreadsheet className="w-3.5 h-3.5" /> Backup (.xlsx)
-          </button>
-          <label className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold cursor-pointer hover:bg-emerald-100 shadow-xs">
-            <Upload className="w-3.5 h-3.5" /> Import (.xlsx)
-            <input type="file" accept=".xlsx,.xls" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onImportProtocolExcel(f); }} />
-          </label>
+          <RunTestMenu suite={selectedSuite} onRunTest={onRunTest} onSchedule={onSchedule} />
+          <ActionMenu label="More" groups={[
+            { label: 'Library', items: [
+              { label: 'Add cases from library…', onSelect: () => setShowLibraryModal(true) },
+              { label: 'Load a saved suite…', onSelect: () => setShowSuiteLibraryModal(true) },
+              { label: 'Save this suite to library', onSelect: handleSaveSuiteToLibrary, disabledReason: needSuite },
+            ] },
+            { label: 'Code editor', items: [
+              { label: 'Send to VS Code (.md)', onSelect: onExportSuiteMd, disabledReason: needSuite },
+              { label: 'Send as Robot suite (.robot)', onSelect: () => selectedSuite && onExportRobotSuite(selectedSuite), disabledReason: needSuite },
+              { label: 'Pull changes from VS Code…', onSelect: onShowBackAnnotateModal },
+            ] },
+            { label: 'Import', items: [
+              { label: 'Test cases from CSV, JSON or XML…', accept: '.csv,.json,.xml', onFile: (f) => void handleImportCases(f), disabledReason: needSuite },
+              { label: 'Test cases from Excel (.xlsx)', disabledReason: 'Coming soon: Excel import is not built yet', badge: 'Soon' },
+            ] },
+            { label: 'Export', items: [
+              { label: 'Test cases as CSV', onSelect: () => handleExportCases('csv'), disabledReason: needSuite },
+              { label: 'Test cases as JSON', onSelect: () => handleExportCases('json'), disabledReason: needSuite },
+              { label: 'Test cases as XML', onSelect: () => handleExportCases('xml'), disabledReason: needSuite },
+              { label: 'Full backup of Test Management (.xlsx)', hint: 'Every suite, run and milestone', onSelect: onExportProtocolExcel },
+            ] },
+          ]} />
         </div>
       </div>
 
@@ -1447,7 +1436,7 @@ const TestCasesView: React.FC<{
                   </button>
                   {depth > 0 && <span className="text-[10px] text-slate-400 uppercase font-semibold">Sub-section</span>}
                   <span className="font-bold text-sm text-slate-800">{sec.title}</span>
-                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">{secCases.length}</span>
+                  <span className="w-5 h-5 rounded-full bg-[var(--panel-alt)] text-[var(--text-dim)] text-[10px] font-bold flex items-center justify-center">{secCases.length}</span>
                   <button className="p-0.5 text-slate-400 hover:text-slate-600 ml-1" onClick={() => handleRenameSection(sec)} aria-label={`Rename section ${sec.title}`}><Edit3 className="w-3.5 h-3.5" /></button>
                   <button className="p-0.5 text-slate-400 hover:text-blue-600" onClick={() => handleAddSection(sec.id)} aria-label={`Add sub-section to ${sec.title}`} title="Add sub-section"><Plus className="w-3.5 h-3.5" /></button>
                   <button className="p-0.5 text-slate-400 hover:text-rose-600" onClick={() => handleDeleteSection(sec)} aria-label={`Delete section ${sec.title}`} title="Delete section"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -1477,8 +1466,8 @@ const TestCasesView: React.FC<{
                                 <Flag className="w-3 h-3" />
                               </button>
                             </div>
-                            <div className="col-span-1 text-[11px] font-mono text-[var(--success)] font-semibold">{tc.customId}</div>
-                            <div className="col-span-4 flex items-center gap-1.5 text-xs text-[var(--blue)] font-medium truncate">
+                            <div className="col-span-1 text-[11px] font-mono text-[var(--text-dim)] font-semibold">{tc.customId}</div>
+                            <div className="col-span-4 flex items-center gap-1.5 text-xs text-[var(--text)] font-medium truncate">
                               <span className="truncate">{tc.title}</span>
                               {tc.isDeleted && <span className="shrink-0 text-[9px] text-rose-600 border border-rose-200 rounded px-1">Deleted</span>}
                             </div>
@@ -1488,7 +1477,7 @@ const TestCasesView: React.FC<{
                             <div className="col-span-1 text-[11px] text-slate-500">{tc.estimateMin ? `${tc.estimateMin}m` : '—'}</div>
                             <div className="col-span-2 flex flex-wrap gap-1">
                               {(tc.labels || []).slice(0, 2).map(l => (
-                                <span key={l} className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded">{l}</span>
+                                <span key={l} className="text-[9px] px-1.5 py-0.5 bg-[var(--panel-alt)] text-[var(--text-dim)] border border-[var(--border)] rounded">{l}</span>
                               ))}
                             </div>
                             <div className="col-span-1 text-[11px] text-slate-500 truncate">{(tc.references || []).join(', ') || '—'}</div>
@@ -1565,11 +1554,11 @@ const TestCasesView: React.FC<{
                 <div key={tc.id} className="border-b border-slate-200 last:border-0">
                   <div className={`grid grid-cols-12 gap-2 px-3 py-2.5 cursor-pointer items-center group ${tc.isDeleted ? 'bg-slate-100/70 opacity-70' : 'hover:bg-slate-50'}`} onClick={()=>setExpandedCaseId(expandedCaseId===tc.id?null:tc.id)}>
                     <div className="col-span-1"><button onClick={e=>{e.stopPropagation();handleToggleFlag(tc.id);}} aria-label="Flag test case" className={`p-0.5 rounded ${tc.isFlagged?'text-amber-500':'text-slate-400 hover:text-amber-500'}`}><Flag className="w-3 h-3"/></button></div>
-                    <div className="col-span-1 text-[11px] font-mono text-[var(--success)] font-semibold">{tc.customId}</div>
-                    <div className="col-span-4 flex items-center gap-1.5 text-xs text-[var(--blue)] font-medium truncate"><span className="truncate">{tc.title}</span>{tc.isDeleted && <span className="shrink-0 text-[9px] text-rose-600 border border-rose-200 rounded px-1">Deleted</span>}</div>
+                    <div className="col-span-1 text-[11px] font-mono text-[var(--text-dim)] font-semibold">{tc.customId}</div>
+                    <div className="col-span-4 flex items-center gap-1.5 text-xs text-[var(--text)] font-medium truncate"><span className="truncate">{tc.title}</span>{tc.isDeleted && <span className="shrink-0 text-[9px] text-rose-600 border border-rose-200 rounded px-1">Deleted</span>}</div>
                     <div className="col-span-1"><span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${PRIORITY_COLORS[tc.priority]}`}>{tc.priority}</span></div>
                     <div className="col-span-1 text-[11px] text-slate-500">{tc.estimateMin?`${tc.estimateMin}m`:'—'}</div>
-                    <div className="col-span-2 flex flex-wrap gap-1">{(tc.labels||[]).slice(0,2).map(l=><span key={l} className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded">{l}</span>)}</div>
+                    <div className="col-span-2 flex flex-wrap gap-1">{(tc.labels||[]).slice(0,2).map(l=><span key={l} className="text-[9px] px-1.5 py-0.5 bg-[var(--panel-alt)] text-[var(--text-dim)] border border-[var(--border)] rounded">{l}</span>)}</div>
                     <div className="col-span-1 text-[11px] text-slate-500">{(tc.references||[]).join(', ')||'—'}</div>
                     <div className="col-span-1 flex justify-between items-center">
                       <span className="text-[10px] text-slate-500">{tc.type==='Automated'?'Auto':'Manual'}</span>
@@ -1766,7 +1755,7 @@ const RunDetailView: React.FC<{
           <button onClick={() => setEditing(true)}
             className="flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-300 text-slate-700 rounded-lg text-xs hover:bg-slate-50 shadow-xs"><Edit3 className="w-3.5 h-3.5" /> Edit</button>
           <button onClick={() => suite && onRunTest(suite)} disabled={!suite} title={suite ? 'Run this suite\'s automated tests on a test server' : 'The run\'s suite no longer exists'}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-[var(--on-warning)]! rounded-lg text-xs font-bold shadow-xs disabled:opacity-50"><Play className="w-3.5 h-3.5" /> Execute Automated Tests</button>
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--panel)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--text-faint)] rounded-lg text-xs font-semibold disabled:opacity-50"><Play className="w-3.5 h-3.5" /> Run Test</button>
         </div>
       </div>
       {reportNote && <p role="status" className="text-xs text-[var(--blue)] -mt-2 mb-3">{reportNote}</p>}
@@ -1837,7 +1826,7 @@ const RunDetailView: React.FC<{
                         onClick={()=>setExpandedResultCaseId(isExpanded?null:r.caseId)}>
                         <div className="col-span-1 text-[10px] font-mono text-[var(--success)]">{r.customId}</div>
                         <div className="col-span-5 text-xs text-blue-700 truncate">{r.title}</div>
-                        <div className="col-span-2 flex flex-wrap gap-1">{(r.labels||[]).slice(0,1).map(l=><span key={l} className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded">{l}</span>)}</div>
+                        <div className="col-span-2 flex flex-wrap gap-1">{(r.labels||[]).slice(0,1).map(l=><span key={l} className="text-[9px] px-1.5 py-0.5 bg-[var(--panel-alt)] text-[var(--text-dim)] border border-[var(--border)] rounded">{l}</span>)}</div>
                         <div className="col-span-2 text-[11px] text-slate-500 truncate">{r.assignedTo||'—'}</div>
                         <div className="col-span-2" onClick={e=>e.stopPropagation()}>
                           <select aria-label={`Status of ${r.customId}`} value={r.status} onChange={e=>handleStatusChange(r.caseId,e.target.value as TestCaseStatus)}
@@ -2071,8 +2060,8 @@ const TestRunsView: React.FC<{
         </div>
         <div className="flex items-center gap-3 w-44 flex-shrink-0">
           <div className="flex-1"><RunProgressBar run={run}/></div>
-          <button onClick={e=>{e.stopPropagation();if(window.confirm('Delete?'))onDeleteRun(run.id);}}
-            className="p-1 text-slate-400 hover:text-rose-600 opacity-0 group-hover:opacity-100"><X className="w-3.5 h-3.5"/></button>
+          <button onClick={e=>{e.stopPropagation();if(window.confirm('Delete?'))onDeleteRun(run.id);}} aria-label={`Delete run ${run.name}`} title="Delete run"
+            className="p-1 text-slate-400 hover:text-rose-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"><X className="w-3.5 h-3.5"/></button>
         </div>
       </div>
     </div>
@@ -2084,23 +2073,14 @@ const TestRunsView: React.FC<{
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-lg font-bold text-slate-900">Test Runs & Results</h2>
         <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={()=>setShowXmlModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold shadow-xs">
-            <Upload className="w-3.5 h-3.5"/> Import output.xml
-          </button>
-          <button onClick={onDownloadResultJson} disabled={!lastRunResults} title={!lastRunResults ? 'Run a test first to enable this' : 'Download the last run\'s results as JSON'} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--panel-alt)] text-[var(--blue)] border border-[var(--border)] rounded-lg text-xs font-semibold disabled:opacity-40">
-            <Download className="w-3.5 h-3.5"/> Download JSON
-          </button>
-          <button onClick={onExportRunReport} disabled={!lastRunResults} title={!lastRunResults ? 'Run a test first to enable this' : 'Export the last run\'s results as an Excel report'} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--panel-alt)] text-[var(--success)] border border-[var(--border)] rounded-lg text-xs font-semibold disabled:opacity-40">
-            <FileSpreadsheet className="w-3.5 h-3.5"/> Export Report
-          </button>
+          <ActionMenu label="Results" groups={[{ items: [
+            { label: 'Import Robot output.xml…', onSelect: () => setShowXmlModal(true) },
+            { label: 'Download last run (JSON)', onSelect: onDownloadResultJson, disabledReason: lastRunResults ? undefined : 'Run a test first to enable this' },
+            { label: 'Export last run report (.xlsx)', onSelect: onExportRunReport, disabledReason: lastRunResults ? undefined : 'Run a test first to enable this' },
+          ] }]} />
+          <RunTestMenu suite={selectedSuite} onRunTest={onRunTest} onSchedule={onSchedule} />
           <button onClick={()=>setShowAddModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs">
             <Plus className="w-3.5 h-3.5"/> Add Test Run
-          </button>
-          <button onClick={() => selectedSuite && onRunTest(selectedSuite)} disabled={!selectedSuite} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-[var(--on-warning)]! rounded-lg text-xs font-bold shadow-xs disabled:opacity-50">
-            <Play className="w-3.5 h-3.5"/> Execute Automated Tests
-          </button>
-          <button onClick={() => selectedSuite && onSchedule(selectedSuite)} disabled={!selectedSuite} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--panel-alt)] text-[var(--text)] border border-[var(--border)] rounded-lg text-xs font-semibold disabled:opacity-50">
-            <CalendarClock className="w-3.5 h-3.5" /> Schedule
           </button>
         </div>
       </div>
@@ -3062,8 +3042,7 @@ const TestCaseManager: React.FC<TestCaseManagerProps> = ({ onBackToHub, onNaviga
     }
   };
 
-  // Both "Run Test" (Test Cases toolbar) and "Execute Automated Tests"
-  // (Test Runs toolbar) call this, scoped to the currently selected
+  // "Run Test" (the toolbar menus and the run page) calls this, scoped to the currently selected
   // suite. Asks which test server to use (DDS-SRS-020), pushes the suite's
   // script to the backend, which sends it to that server (or its simulated
   // Test PC), shows an "In Progress" run immediately, then updates it in
@@ -3166,10 +3145,6 @@ const TestCaseManager: React.FC<TestCaseManagerProps> = ({ onBackToHub, onNaviga
     }
   };
 
-  const handleImportProtocolExcel = async (_file: File) => {
-    showToast('⚠️ Excel import for operations test cases coming soon.');
-  };
-
   // ── Render ──────────────────────────────────────────────────────────────────
   if (loadState !== 'ready') {
     return (
@@ -3245,7 +3220,6 @@ const TestCaseManager: React.FC<TestCaseManagerProps> = ({ onBackToHub, onNaviga
               onShowToast={showToast} onExportSuiteMd={handleExportSuiteMd}
               onExportRobotSuite={handleExportRobotSuite}
               onExportProtocolExcel={handleExportProtocolExcel}
-              onImportProtocolExcel={handleImportProtocolExcel}
               onShowAiModal={()=>setShowAiModal(true)}
               onShowBackAnnotateModal={()=>setShowBackAnnotateModal(true)}
               onRunTest={handleRunTest}

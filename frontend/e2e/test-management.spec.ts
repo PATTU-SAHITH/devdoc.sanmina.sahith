@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { test, expect, type Page } from '@playwright/test';
 import { signInThroughBackend, startStack, type Stack } from './backendHarness';
+import { importCasesInput, menuAction } from './helpers';
 
 // Test Management is server-only (its data lives in Redis behind the API),
 // so these run against a real API on their own ports. One worker, in file
@@ -47,7 +48,7 @@ test.describe('shared on the server', () => {
     const other = await otherContext.newPage();
     await signInThroughBackend(other, stack, stack.users[2]);
     await openTestManagement(other);
-    await other.getByRole('button', { name: 'Import from Library' }).click();
+    await menuAction(other, 'More', 'Add cases from library…');
     const modal = other.getByRole('heading', { name: 'Import from Library' }).locator('xpath=ancestor::div[contains(@class, "max-w-2xl")]');
     await expect(modal.getByText('RTC Clock Drift Verification under 1-Hour Stress Load')).toBeVisible();
     await otherContext.close();
@@ -248,14 +249,14 @@ test.describe('CSV / JSON / XML exchange (DDS-SRS-015)', () => {
       expect(before).toBeGreaterThan(0);
 
       const download = page.waitForEvent('download');
-      await page.getByLabel('Export test cases').selectOption(format);
+      await menuAction(page, 'More', `Test cases as ${format.toUpperCase()}`);
       const file = await download;
       expect(file.suggestedFilename()).toMatch(new RegExp(`_test_cases\\.${format}$`));
 
       // Playwright stores downloads under a random, extension-less name; hand the
       // importer the file under the name a user would actually have saved it as.
       const buffer = readFileSync(await file.path());
-      await page.getByLabel('Import test cases (CSV, JSON or XML)').setInputFiles({ name: file.suggestedFilename(), mimeType: 'text/plain', buffer });
+      await (await importCasesInput(page)).setInputFiles({ name: file.suggestedFilename(), mimeType: 'text/plain', buffer });
       await expect(page.getByText(`Imported ${before} test case`)).toBeVisible();
       // Originals keep C1.. ; the clashing copies continue the TC sequence.
       await expect(rows).toHaveCount(before);
@@ -267,7 +268,7 @@ test.describe('CSV / JSON / XML exchange (DDS-SRS-015)', () => {
   test('a malformed file is rejected with a message', async ({ page }) => {
     await signIn(page);
     await openTestManagement(page);
-    await page.getByLabel('Import test cases (CSV, JSON or XML)').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{oops') });
+    await (await importCasesInput(page)).setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{oops') });
     await expect(page.getByText('JSON: the file is not valid JSON.')).toBeVisible();
   });
 });
