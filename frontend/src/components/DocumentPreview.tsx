@@ -23,32 +23,32 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const handleZoomReset = () => setZoom(100);
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-57px)] bg-[#0a0a0a] overflow-hidden select-text">
-      <div className="flex items-center justify-between px-4 py-2 bg-[#0d0d0d] border-b border-[#242424] text-xs text-[#8a8a8a]">
+    <div className="flex-1 flex flex-col h-[calc(100vh-57px)] bg-[var(--bg)] overflow-hidden select-text">
+      <div className="flex items-center justify-between px-4 py-2 bg-[var(--panel)] border-b border-[var(--border)] text-xs text-[var(--text-dim)]">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-[#ededed]">Live Document Canvas</span>
-          <span className="text-[11px] px-2 py-0.5 border border-[#242424] bg-[#111111] text-[#4ade80] font-mono uppercase tracking-[0.12em]">
+          <span className="font-semibold text-[var(--text)]">Live Document Canvas</span>
+          <span className="text-[11px] px-2 py-0.5 border border-[var(--border)] bg-[var(--panel)] text-[var(--accent-text)] font-mono uppercase tracking-[0.12em]">
             {metadata.docNumber || 'DOC-01'}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-[#111111] px-2 py-1 border border-[#242424]">
-            <button type="button" onClick={handleZoomOut} title="Zoom Out" className="p-1 text-[#8a8a8a] hover:text-[#ededed]">
+          <div className="flex items-center gap-1 bg-[var(--panel)] px-2 py-1 border border-[var(--border)]">
+            <button type="button" onClick={handleZoomOut} title="Zoom Out" className="p-1 text-[var(--text-dim)] hover:text-[var(--text)]">
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-xs font-mono text-[#ededed] w-10 text-center">{zoom}%</span>
-            <button type="button" onClick={handleZoomIn} title="Zoom In" className="p-1 text-[#8a8a8a] hover:text-[#ededed]">
+            <span className="text-xs font-mono text-[var(--text)] w-10 text-center">{zoom}%</span>
+            <button type="button" onClick={handleZoomIn} title="Zoom In" className="p-1 text-[var(--text-dim)] hover:text-[var(--text)]">
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
-            <button type="button" onClick={handleZoomReset} title="Reset Zoom" className="p-1 text-[#8a8a8a] hover:text-[#ededed] ml-1 border-l border-[#242424]">
+            <button type="button" onClick={handleZoomReset} title="Reset Zoom" className="p-1 text-[var(--text-dim)] hover:text-[var(--text)] ml-1 border-l border-[var(--border)]">
               <Maximize2 className="w-3 h-3" />
             </button>
           </div>
         </div>
       </div>
 
-      <div tabIndex={0} role="region" aria-label="Document preview" className="flex-1 overflow-y-auto p-6 md:p-8 flex justify-center bg-[#0a0a0a]">
+      <div tabIndex={0} role="region" aria-label="Document preview" className="flex-1 overflow-y-auto p-6 md:p-8 flex justify-center bg-[var(--bg)]">
         <div 
           style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
           className="transition-transform duration-150 ease-out"
@@ -228,7 +228,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                           {sec.codeSnippet.oldCode && (
                             <div>
                               <div className="text-[11px] font-bold text-rose-700 mb-1">[-] Original Code:</div>
-                              <pre className="doc-code bg-[rgba(255,84,112,0.08)] border-[var(--danger)] text-[var(--text)]">
+                              <pre className="doc-code bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] border-[var(--danger)] text-[var(--text)]">
                                 {sec.codeSnippet.oldCode}
                               </pre>
                             </div>
@@ -236,7 +236,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                           {sec.codeSnippet.newCode && (
                             <div>
                               <div className="text-[11px] font-bold text-emerald-700 mb-1">[+] Fixed Code:</div>
-                              <pre className="doc-code bg-[rgba(43,255,176,0.08)] border-[var(--success)] text-[var(--text)]">
+                              <pre className="doc-code bg-[color-mix(in_srgb,var(--success)_8%,transparent)] border-[var(--success)] text-[var(--text)]">
                                 {sec.codeSnippet.newCode}
                               </pre>
                             </div>

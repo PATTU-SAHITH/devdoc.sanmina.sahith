@@ -373,11 +373,12 @@ const RunProgressBar: React.FC<{ run: TestRunItem }> = ({ run }) => {
 
 const PieChart: React.FC<{ run: TestRunItem }> = ({ run }) => {
   const data = [
-    { value: run.passedCount,        color: '#10b981' },
-    { value: run.blockedCount,       color: '#94a3b8' },
-    { value: run.skippedCount ?? 0,  color: '#f59e0b' },
-    { value: run.failedCount,        color: '#f43f5e' },
-    { value: run.untestedCount ?? 0, color: '#cbd5e1' },
+    // Theme colours (theme.css), so the chart follows Light, Dark and Split.
+    { value: run.passedCount,        color: 'var(--success-500)' },
+    { value: run.blockedCount,       color: 'var(--neutral-400)' },
+    { value: run.skippedCount ?? 0,  color: 'var(--warning-500)' },
+    { value: run.failedCount,        color: 'var(--danger-500)' },
+    { value: run.untestedCount ?? 0, color: 'var(--neutral-300)' },
   ].filter(d => d.value > 0);
   const total = data.reduce((s, d) => s + d.value, 0);
   if (total === 0) return <div className="w-28 h-28 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">No data</div>;
@@ -393,7 +394,7 @@ const PieChart: React.FC<{ run: TestRunItem }> = ({ run }) => {
   });
   return (
     <svg width={112} height={112} viewBox="0 0 112 112">
-      {slices.map((s, i) => <path key={i} d={s.path} fill={s.color} />)}
+      {slices.map((s, i) => <path key={i} d={s.path} style={{ fill: s.color }} />)}
       <circle cx={56} cy={56} r={25} style={{ fill: 'var(--panel)' }} />
     </svg>
   );
@@ -1328,7 +1329,7 @@ const TestCasesView: React.FC<{
           <button onClick={onShowBackAnnotateModal} className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold shadow-xs transition-colors">
             <RefreshCw className="w-3.5 h-3.5" /> Back-Annotate (VS Code)
           </button>
-          <button onClick={() => selectedSuite && onRunTest(selectedSuite)} disabled={!selectedSuite} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-[#07111d]! rounded-lg text-xs font-bold shadow-xs disabled:opacity-50">
+          <button onClick={() => selectedSuite && onRunTest(selectedSuite)} disabled={!selectedSuite} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-[var(--on-warning)]! rounded-lg text-xs font-bold shadow-xs disabled:opacity-50">
             <Play className="w-3.5 h-3.5" /> Run Test
           </button>
           <button onClick={() => selectedSuite && onSchedule(selectedSuite)} disabled={!selectedSuite} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--panel-alt)] text-[var(--text)] border border-[var(--border)] rounded-lg text-xs font-semibold disabled:opacity-50">
@@ -1765,7 +1766,7 @@ const RunDetailView: React.FC<{
           <button onClick={() => setEditing(true)}
             className="flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-300 text-slate-700 rounded-lg text-xs hover:bg-slate-50 shadow-xs"><Edit3 className="w-3.5 h-3.5" /> Edit</button>
           <button onClick={() => suite && onRunTest(suite)} disabled={!suite} title={suite ? 'Run this suite\'s automated tests on a test server' : 'The run\'s suite no longer exists'}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-[#07111d]! rounded-lg text-xs font-bold shadow-xs disabled:opacity-50"><Play className="w-3.5 h-3.5" /> Execute Automated Tests</button>
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-[var(--on-warning)]! rounded-lg text-xs font-bold shadow-xs disabled:opacity-50"><Play className="w-3.5 h-3.5" /> Execute Automated Tests</button>
         </div>
       </div>
       {reportNote && <p role="status" className="text-xs text-[var(--blue)] -mt-2 mb-3">{reportNote}</p>}
@@ -2095,7 +2096,7 @@ const TestRunsView: React.FC<{
           <button onClick={()=>setShowAddModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-xs">
             <Plus className="w-3.5 h-3.5"/> Add Test Run
           </button>
-          <button onClick={() => selectedSuite && onRunTest(selectedSuite)} disabled={!selectedSuite} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-[#07111d]! rounded-lg text-xs font-bold shadow-xs disabled:opacity-50">
+          <button onClick={() => selectedSuite && onRunTest(selectedSuite)} disabled={!selectedSuite} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-[var(--on-warning)]! rounded-lg text-xs font-bold shadow-xs disabled:opacity-50">
             <Play className="w-3.5 h-3.5"/> Execute Automated Tests
           </button>
           <button onClick={() => selectedSuite && onSchedule(selectedSuite)} disabled={!selectedSuite} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--panel-alt)] text-[var(--text)] border border-[var(--border)] rounded-lg text-xs font-semibold disabled:opacity-50">

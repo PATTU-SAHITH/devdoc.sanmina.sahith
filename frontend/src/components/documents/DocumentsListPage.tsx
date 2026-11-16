@@ -21,10 +21,10 @@ interface DocumentsListPageProps {
 }
 
 const STATUS_STYLES: Record<DocStatus, { bg: string; text: string; dot: string }> = {
-  DRAFT: { bg: 'bg-[#2a220b]', text: 'text-[var(--amber)]', dot: 'bg-[var(--amber)]' },
-  IN_REVIEW: { bg: 'bg-[#111d2f]', text: 'text-[var(--purple)]', dot: 'bg-[var(--purple)]' },
-  APPROVED: { bg: 'bg-[#142b1d]', text: 'text-[var(--success)]', dot: 'bg-[var(--success)]' },
-  PUBLISHED: { bg: 'bg-[#0e2233]', text: 'text-[var(--blue)]', dot: 'bg-[var(--blue)]' },
+  DRAFT: { bg: 'bg-[color-mix(in_srgb,var(--amber)_14%,transparent)]', text: 'text-[var(--amber)]', dot: 'bg-[var(--amber)]' },
+  IN_REVIEW: { bg: 'bg-[var(--panel-alt)]', text: 'text-[var(--purple)]', dot: 'bg-[var(--purple)]' },
+  APPROVED: { bg: 'bg-[color-mix(in_srgb,var(--success)_14%,transparent)]', text: 'text-[var(--success)]', dot: 'bg-[var(--success)]' },
+  PUBLISHED: { bg: 'bg-[color-mix(in_srgb,var(--accent)_10%,transparent)]', text: 'text-[var(--blue)]', dot: 'bg-[var(--blue)]' },
 };
 
 export const DocumentsListPage: React.FC<DocumentsListPageProps> = ({

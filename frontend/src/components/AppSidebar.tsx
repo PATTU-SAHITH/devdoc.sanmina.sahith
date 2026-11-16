@@ -180,16 +180,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       onClick={() => {
         if (!expanded) setExpanded(true);
       }}
-      className={`relative z-40 h-full shrink-0 select-none overflow-hidden bg-[#0f0f0f] border-r border-[#242424] shadow-xl flex flex-col transition-[width] ${MOTION} ${
+      // theme-invert: in the Split theme the sidebar uses the Dark colours (theme.css).
+      className={`theme-invert relative z-40 h-full shrink-0 select-none overflow-hidden bg-[var(--panel)] border-r border-[var(--border)] shadow-xl flex flex-col transition-[width] ${MOTION} ${
         expanded ? 'w-64' : 'w-14 cursor-pointer'
       }`}
     >
-      <div className={`relative shrink-0 ${compact ? 'h-16' : 'h-24'} border-b border-[#242424]`}>
+      <div className={`relative shrink-0 ${compact ? 'h-16' : 'h-24'} border-b border-[var(--border)]`}>
         <div aria-hidden={!expanded} className={`absolute inset-y-0 left-0 w-52 pl-2.5 flex items-center gap-3 ${fade}`}>
-          <img src="/logo.png" alt="DevDoc Studio Logo" className="w-9 h-9 object-contain shrink-0 border border-[#242424] bg-[#0a0a0a] p-1" />
+          <img src="/logo.png" alt="DevDoc Studio Logo" className="w-9 h-9 object-contain shrink-0 border border-[var(--border)] bg-[var(--bg)] p-1" />
           <div>
-            <div className="text-[13px] font-bold tracking-[0.12em] text-[#ededed] uppercase leading-tight">DevDoc</div>
-            <div className="text-[9px] text-[#8a8a8a] uppercase font-mono tracking-[0.14em] leading-tight">Studio</div>
+            <div className="text-[13px] font-bold tracking-[0.12em] text-[var(--text)] uppercase leading-tight">DevDoc</div>
+            <div className="text-[9px] text-[var(--text-dim)] uppercase font-mono tracking-[0.14em] leading-tight">Studio</div>
           </div>
         </div>
         {/* Pinned to the bar's right edge, so it rides along with it. */}
@@ -200,7 +201,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           aria-controls="app-sidebar-panel"
           title={expanded ? 'Minimize sidebar' : 'Maximize sidebar'}
           aria-label={expanded ? 'Minimize sidebar' : 'Maximize sidebar'}
-          className={`absolute top-1/2 -translate-y-1/2 border border-[#242424] bg-[#111111] p-1.5 text-[#8a8a8a] hover:text-[#ededed] hover:border-[#4ade80] transition-[right,color,border-color] ${MOTION} ${
+          className={`absolute top-1/2 -translate-y-1/2 border border-[var(--border)] bg-[var(--panel)] p-1.5 text-[var(--text-dim)] hover:text-[var(--text)] hover:border-[var(--accent-text)] transition-[right,color,border-color] ${MOTION} ${
             expanded ? 'right-4' : 'right-[13px]'
           }`}
         >
@@ -229,11 +230,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               title={!expanded ? item.label : undefined}
               className={`w-full flex items-center gap-3 px-2.5 py-2.5 text-left overflow-hidden transition-colors border-l-2 border-y border-r ${
                 active
-                  ? 'bg-[#131313] text-[#ededed] border-l-[#4ade80] border-y-[#242424] border-r-[#242424]'
-                  : 'text-[#8a8a8a] hover:text-[#ededed] hover:bg-[#131313] border-l-transparent border-y-[#1a1a1a] border-r-[#1a1a1a]'
+                  ? 'bg-[var(--panel-alt)] text-[var(--text)] border-l-[var(--accent-text)] border-y-[var(--border)] border-r-[var(--border)]'
+                  : 'text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-[var(--panel-alt)] border-l-transparent border-y-transparent border-r-transparent'
               }`}
             >
-              <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[#4ade80]' : 'text-[#8a8a8a]'}`} />
+              <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[var(--accent-text)]' : 'text-[var(--text-dim)]'}`} />
               <span className={`whitespace-nowrap text-[11px] font-medium uppercase tracking-[0.12em] font-mono ${fade}`}>{item.label}</span>
               <ChevronRight
                 className={`w-3.5 h-3.5 ml-auto shrink-0 transition-opacity motion-reduce:transition-none ${expanded && !active ? 'opacity-50' : 'opacity-0'}`}
@@ -243,19 +244,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         })}
       </nav>
 
-      <div className="relative mt-auto shrink-0 p-3 border-t border-[#242424] bg-[#0d0d0d] flex items-center gap-2.5">
+      <div className="relative mt-auto shrink-0 p-3 border-t border-[var(--border)] bg-[var(--panel)] flex items-center gap-2.5">
         {user.avatarUrl ? (
-          <img src={user.avatarUrl} alt={`${user.name} profile`} className="w-8 h-8 border border-[#242424] object-cover shrink-0" />
+          <img src={user.avatarUrl} alt={`${user.name} profile`} className="w-8 h-8 border border-[var(--border)] object-cover shrink-0" />
         ) : (
-          <div className="w-8 h-8 border border-[#242424] bg-[#131313] flex items-center justify-center text-[10px] font-bold text-[#ededed] font-mono uppercase shrink-0">
+          <div className="w-8 h-8 border border-[var(--border)] bg-[var(--panel-alt)] flex items-center justify-center text-[10px] font-bold text-[var(--text)] font-mono uppercase shrink-0">
             {user.initials}
           </div>
         )}
         {/* Fixed width: the bar clips it while closing, rather than the
             text re-truncating on every frame of the animation. */}
         <div aria-hidden={!expanded} className={`w-[150px] shrink-0 min-w-0 ${fade}`}>
-          <div className="text-[10px] font-bold text-[#ededed] uppercase tracking-[0.08em] truncate font-mono">{user.name}</div>
-          <div className="text-[9px] text-[#8a8a8a] uppercase tracking-[0.1em] truncate font-mono">{user.designation}</div>
+          <div className="text-[10px] font-bold text-[var(--text)] uppercase tracking-[0.08em] truncate font-mono">{user.name}</div>
+          <div className="text-[9px] text-[var(--text-dim)] uppercase tracking-[0.1em] truncate font-mono">{user.designation}</div>
         </div>
         <button
           type="button"
@@ -266,7 +267,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           title="Sign Out"
           aria-hidden={!expanded}
           tabIndex={expanded ? 0 : -1}
-          className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 border border-[#242424] bg-[#111111] text-[#f87171] hover:bg-[#171717] transition-[opacity,background-color] motion-reduce:transition-none ${
+          className={`absolute right-3 top-1/2 -translate-y-1/2 p-1.5 border border-[var(--border)] bg-[var(--panel)] text-[var(--danger)] hover:bg-[var(--panel-alt)] transition-[opacity,background-color] motion-reduce:transition-none ${
             expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >

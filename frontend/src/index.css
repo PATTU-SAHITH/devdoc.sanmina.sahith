@@ -1,37 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+/* Colour themes (Light, Dark, Split): every colour value lives there. */
+@import "./theme.css";
 
 @layer base {
   :root {
     --font-sans: 'Space Grotesk', 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', 'SFMono-Regular', monospace;
     --font-doc: 'Space Grotesk', 'Segoe UI', sans-serif;
-
-    --bg: #0b1220;
-    --panel: #101a2e;
-    --panel-alt: #16223a;
-    --border: #28395a;
-    --border-soft: #1e2c48;
-    --text: #eef3ff;
-    --text-dim: #96a8c9;
-    --text-faint: #8496b8;
-    --success: #2bffb0;
-    --danger: #ff5470;
-    --purple: #8c7bff;
-    --amber: #ffcc4d;
-    --blue: #3ec7ff;
-    --pink: #ff6bd6;
-    --white: #eef3ff;
-    --signal-gradient: linear-gradient(90deg, #2bffb0, #3ec7ff);
-
-    --doc-paper-bg: #101a2e;
-    --doc-paper-text: #eef3ff;
-    --doc-primary: #2bffb0;
-    --doc-secondary: #8c7bff;
-    --doc-border: #28395a;
-    --doc-table-header-bg: #16223a;
-    --doc-code-bg: #0b1220;
-    --doc-code-border: #1e2c48;
   }
 
   * {
@@ -106,10 +82,9 @@
 }
 
 .btn-primary {
-  background: var(--signal-gradient);
-  color: #07111d;
-  border: 1px solid var(--success);
-  box-shadow: 0 0 12px rgba(43, 255, 176, 0.25);
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 1px solid var(--accent);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-family: var(--font-mono);
@@ -119,16 +94,12 @@
 }
 
 .btn-primary:hover {
-  background: linear-gradient(90deg, #3effba, #62d8ff);
-  border-color: var(--success);
-  box-shadow: 0 0 16px rgba(43, 255, 176, 0.36);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .signal-text {
-  background-image: var(--signal-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+  color: var(--accent-text);
 }
 
 .btn-secondary {
@@ -194,7 +165,7 @@
 .ui-button-danger:hover {
   background: var(--danger);
   border-color: var(--danger);
-  color: var(--bg);
+  color: var(--on-accent);
 }
 
 .ui-button-icon {
@@ -203,61 +174,10 @@
   height: 32px;
 }
 
-/* Keep legacy utility-heavy screens on the same control-room tokens. */
-.bg-white, .bg-slate-50, .bg-slate-100 { background-color: var(--panel) !important; }
-.bg-slate-200 { background-color: var(--panel-alt) !important; }
-.text-slate-900, .text-slate-800, .text-gray-900 { color: var(--text) !important; }
-.text-slate-700, .text-slate-600, .text-slate-500, .text-gray-500 { color: var(--text-dim) !important; }
-.text-white { color: var(--text) !important; }
-.border-slate-200, .border-slate-300, .border-gray-200 { border-color: var(--border) !important; }
-.shadow-xs, .shadow-2xl { box-shadow: none !important; }
-
-/* Their hover variants too: unmapped, these flashed near-white
-   backgrounds and turned text dark slate on hover. Light theme hover
-   meant "a shade darker"; here it means a shade lighter / brighter. */
-.hover\:bg-white:hover, .hover\:bg-slate-50:hover, .hover\:bg-slate-100:hover { background-color: var(--panel-alt) !important; }
-.hover\:bg-slate-200:hover { background-color: var(--border-soft) !important; }
-.hover\:text-slate-900:hover, .hover\:text-slate-800:hover,
-.hover\:text-slate-700:hover, .hover\:text-slate-600:hover { color: var(--text) !important; }
-.hover\:border-slate-300:hover, .hover\:border-slate-400:hover { border-color: var(--text-faint) !important; }
-
-/* Coloured status text and tinted chips (text-*-700 on bg-*-50): the light
-   theme's dark shades drop below 4.5:1 on the dark panel, so use the bright
-   tokens, with a translucent tint of the same colour behind them. */
-.text-emerald-900, .text-emerald-800, .text-emerald-700, .text-emerald-600 { color: var(--success) !important; }
-.text-rose-900, .text-rose-800, .text-rose-700, .text-rose-600 { color: var(--danger) !important; }
-.text-amber-900, .text-amber-800, .text-amber-700, .text-amber-600 { color: var(--amber) !important; }
-.text-blue-900, .text-blue-800, .text-blue-700, .text-blue-600 { color: var(--blue) !important; }
-.text-purple-900, .text-purple-800, .text-purple-700, .text-purple-600 { color: var(--purple) !important; }
-.bg-emerald-50, .bg-emerald-100 { background-color: rgba(43, 255, 176, 0.12) !important; }
-.bg-rose-50, .bg-rose-100 { background-color: rgba(255, 84, 112, 0.12) !important; }
-.bg-amber-50, .bg-amber-100 { background-color: rgba(255, 204, 77, 0.12) !important; }
-.bg-blue-50, .bg-blue-100 { background-color: rgba(62, 199, 255, 0.12) !important; }
-.bg-purple-50, .bg-purple-100 { background-color: rgba(140, 123, 255, 0.14) !important; }
-.border-emerald-200 { border-color: rgba(43, 255, 176, 0.35) !important; }
-.border-rose-200 { border-color: rgba(255, 84, 112, 0.35) !important; }
-.border-amber-200 { border-color: rgba(255, 204, 77, 0.35) !important; }
-.border-blue-200 { border-color: rgba(62, 199, 255, 0.35) !important; }
-.border-purple-200 { border-color: rgba(140, 123, 255, 0.35) !important; }
-
-[class*="bg-[#0a0a0a]"] { background-color: var(--bg) !important; }
-[class*="bg-[#0d0d0d]"], [class*="bg-[#0f0f0f]"], [class*="bg-[#111111]"] { background-color: var(--panel) !important; }
-[class*="bg-[#121212]"], [class*="bg-[#131313]"], [class*="bg-[#142b1d]"] { background-color: var(--panel-alt) !important; }
-[class*="bg-[#ffffff]"] { background: var(--signal-gradient) !important; color: #07111d !important; }
-[class*="text-[#ededed]"] { color: var(--text) !important; }
-[class*="text-[#8a8a8a]"] { color: var(--text-dim) !important; }
-[class*="text-[#4a4a4a]"] { color: var(--text-faint) !important; }
-[class*="text-[#4ade80]"] { color: var(--success) !important; }
-[class*="text-[#a78bfa]"] { color: var(--purple) !important; }
-[class*="text-[#fbbf24]"] { color: var(--amber) !important; }
-[class*="text-[#f87171]"] { color: var(--danger) !important; }
-[class*="border-[#242424]"], [class*="border-[#1a1a1a]"] { border-color: var(--border) !important; }
-[class*="border-[#1f5d39]"] { border-color: var(--success) !important; }
-
-.status-success { color: var(--success); border-color: var(--success); background: rgba(43, 255, 176, 0.15); }
-.status-danger { color: var(--danger); border-color: var(--danger); background: rgba(255, 84, 112, 0.15); }
-.status-info { color: var(--purple); border-color: var(--purple); background: rgba(140, 123, 255, 0.15); }
-.status-warning { color: var(--amber); border-color: var(--amber); background: rgba(255, 204, 77, 0.15); }
+.status-success { color: var(--success); border-color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
+.status-danger { color: var(--danger); border-color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.status-info { color: var(--text-dim); border-color: var(--border); background: var(--panel-alt); }
+.status-warning { color: var(--amber); border-color: var(--amber); background: color-mix(in srgb, var(--amber) 14%, transparent); }
 
 .doc-page {
   width: 8.5in;
@@ -285,7 +205,7 @@
   font-size: 1.45rem;
   font-weight: 700;
   color: var(--doc-primary);
-  border-bottom: 2px solid var(--doc-primary);
+  border-bottom: 2px solid var(--doc-rule);
   padding-bottom: 0.35rem;
   margin-top: 1.5rem;
   margin-bottom: 0.85rem;
@@ -296,7 +216,7 @@
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--doc-primary);
-  border-bottom: 2px solid var(--blue);
+  border-bottom: 1px solid var(--doc-rule);
   padding-bottom: 0.25rem;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
@@ -305,8 +225,8 @@
 .doc-h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text);
-  border-bottom: 2px solid var(--pink);
+  color: var(--doc-primary);
+  border-bottom: 1px solid var(--doc-border);
   padding-bottom: 0.2rem;
   margin-top: 1rem;
   margin-bottom: 0.4rem;
@@ -315,7 +235,7 @@
 .doc-body-text {
   font-size: 0.925rem;
   line-height: 1.65;
-  color: var(--text-dim);
+  color: var(--doc-paper-dim);
   margin-bottom: 0.75rem;
 }
 
@@ -328,7 +248,7 @@
 
 .doc-table th {
   background-color: var(--doc-table-header-bg);
-  color: var(--text);
+  color: var(--doc-paper-text);
   font-family: var(--font-mono);
   font-weight: 600;
   text-transform: uppercase;
@@ -341,12 +261,12 @@
 .doc-table td {
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--doc-border);
-  color: var(--text-dim);
+  color: var(--doc-paper-dim);
   vertical-align: top;
 }
 
 .doc-table tr:nth-child(even) td {
-  background-color: rgba(255, 255, 255, 0.01);
+  background-color: #FAFAFA;
 }
 
 .doc-code {
@@ -356,7 +276,7 @@
   padding: 0.75rem 1rem;
   font-size: 0.82rem;
   line-height: 1.5;
-  color: var(--text);
+  color: var(--doc-paper-text);
   overflow-x: auto;
   margin: 0.75rem 0;
   white-space: pre-wrap;
@@ -369,7 +289,7 @@
   padding: 0.75rem 1rem;
   margin: 0.85rem 0;
   font-size: 0.88rem;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--doc-border);
 }
 
 .doc-callout.warning {

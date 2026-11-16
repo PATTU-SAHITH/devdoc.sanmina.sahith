@@ -91,7 +91,7 @@ export const RunTargetModal: React.FC<RunTargetModalProps> = ({ suiteTitle, onRu
         <footer className="flex justify-end gap-2 border-t border-[var(--border)] px-5 py-3">
           <button type="button" onClick={onClose} className="px-3 py-1.5 text-xs font-semibold text-[var(--text-dim)] hover:text-[var(--text)]">Cancel</button>
           <button type="button" onClick={run} disabled={servers === null}
-            className="flex items-center gap-1.5 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-bold text-[#07111d]! hover:bg-amber-300 disabled:opacity-50">
+            className="flex items-center gap-1.5 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-bold text-[var(--on-warning)]! hover:bg-amber-300 disabled:opacity-50">
             <Play className="h-3.5 w-3.5" /> Start run
           </button>
         </footer>

@@ -67,3 +67,25 @@ describe('Settings → System & Storage', () => {
     for (const panel of ADMIN_ONLY) expect(text).toContain(panel);
   });
 });
+
+describe('Settings → Appearance', () => {
+  it('offers Light, Dark and Split, marks the current one and switches the whole app', () => {
+    localStorage.clear();
+    document.documentElement.dataset.theme = 'dark';
+    renderSettings('user', 'appearance');
+    const group = host!.querySelector('[role="radiogroup"][aria-label="Theme"]')!;
+    const options = [...group.querySelectorAll<HTMLButtonElement>('[role="radio"]')];
+    expect(options.map((o) => o.querySelector('[data-theme-name]')?.textContent)).toEqual(['Light', 'Dark', 'Split']);
+    expect(options.map((o) => o.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
+    expect(options.every((o) => !o.disabled)).toBe(true);
+    expect(host!.textContent).not.toContain('Coming soon');
+
+    act(() => options[2].click());
+    expect(document.documentElement.dataset.theme).toBe('split');
+    expect(localStorage.getItem('devdoc_studio_theme_v1')).toBe('split');
+    expect(options.map((o) => o.getAttribute('aria-checked'))).toEqual(['false', 'false', 'true']);
+
+    act(() => options[0].click());
+    expect(document.documentElement.dataset.theme).toBe('light');
+  });
+});

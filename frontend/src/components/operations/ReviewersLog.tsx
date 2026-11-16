@@ -306,7 +306,7 @@ export const ReviewersLog: React.FC<ReviewersLogProps> = ({ currentDocument, onO
         <div
           className="rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs"
           style={{
-            background: 'linear-gradient(90deg, rgba(62, 199, 255, 0.10), var(--panel) 45%, rgba(43, 255, 176, 0.07))',
+            background: 'var(--panel)',
             border: '1px solid var(--border)',
           }}
         >

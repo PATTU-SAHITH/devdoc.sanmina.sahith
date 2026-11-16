@@ -1,0 +1,560 @@
+/*
+ * Colour themes: Light, Dark and Split (Settings → Appearance, services/themeService.ts).
+ * The company colours: white, black and a little red.
+ *
+ *   Light  white surfaces, near-black text, red accent      (designed as "Paper")
+ *   Dark   black surfaces, light text, red accent           (designed as "Ink")
+ *   Split  Light, with the main sidebar (.theme-invert) in Dark
+ *
+ * How it works. Screens use two kinds of colour:
+ *   1. Our named colours, var(--bg), var(--text), var(--accent)... set per theme below.
+ *   2. Tailwind classes such as bg-blue-600 or text-slate-500. Tailwind 4 reads these
+ *      from variables (--color-blue-600), so each theme re-points them to its own scales:
+ *        grey                      -> neutral   (flipped in Dark: slate-900 is light text)
+ *        indigo, purple, teal...   -> muted     (decorative colours become quiet greys)
+ *        blue (the old accent)     -> accent    (the brand red)
+ *        red, rose                 -> danger
+ *        green, emerald, lime      -> success
+ *        amber, yellow, orange     -> warning
+ *   So a screen follows the theme without naming the theme, and red stays rare.
+ *
+ * The brand red (--accent) is a starting value; set the company's exact red here.
+ */
+
+/* Which scale each Tailwind colour uses: the same in every theme. Declared on
+   .theme-invert and .doc-page too, so the Split sidebar and the white document page
+   resolve them against their own scales. */
+:root, .theme-invert, .doc-page {
+  /* slate, gray, zinc, neutral, stone -> neutral; indigo, violet, purple, fuchsia, pink, sky, cyan, teal -> muted (greys that stay dark enough for white text when used as a fill) */
+  --color-slate-50: var(--neutral-50); --color-slate-100: var(--neutral-100); --color-slate-200: var(--neutral-200); --color-slate-300: var(--neutral-300); --color-slate-400: var(--neutral-400); --color-slate-500: var(--neutral-500); --color-slate-600: var(--neutral-600); --color-slate-700: var(--neutral-700); --color-slate-800: var(--neutral-800); --color-slate-900: var(--neutral-900); --color-slate-950: var(--neutral-950);
+  --color-gray-50: var(--neutral-50); --color-gray-100: var(--neutral-100); --color-gray-200: var(--neutral-200); --color-gray-300: var(--neutral-300); --color-gray-400: var(--neutral-400); --color-gray-500: var(--neutral-500); --color-gray-600: var(--neutral-600); --color-gray-700: var(--neutral-700); --color-gray-800: var(--neutral-800); --color-gray-900: var(--neutral-900); --color-gray-950: var(--neutral-950);
+  --color-zinc-50: var(--neutral-50); --color-zinc-100: var(--neutral-100); --color-zinc-200: var(--neutral-200); --color-zinc-300: var(--neutral-300); --color-zinc-400: var(--neutral-400); --color-zinc-500: var(--neutral-500); --color-zinc-600: var(--neutral-600); --color-zinc-700: var(--neutral-700); --color-zinc-800: var(--neutral-800); --color-zinc-900: var(--neutral-900); --color-zinc-950: var(--neutral-950);
+  --color-neutral-50: var(--neutral-50); --color-neutral-100: var(--neutral-100); --color-neutral-200: var(--neutral-200); --color-neutral-300: var(--neutral-300); --color-neutral-400: var(--neutral-400); --color-neutral-500: var(--neutral-500); --color-neutral-600: var(--neutral-600); --color-neutral-700: var(--neutral-700); --color-neutral-800: var(--neutral-800); --color-neutral-900: var(--neutral-900); --color-neutral-950: var(--neutral-950);
+  --color-stone-50: var(--neutral-50); --color-stone-100: var(--neutral-100); --color-stone-200: var(--neutral-200); --color-stone-300: var(--neutral-300); --color-stone-400: var(--neutral-400); --color-stone-500: var(--neutral-500); --color-stone-600: var(--neutral-600); --color-stone-700: var(--neutral-700); --color-stone-800: var(--neutral-800); --color-stone-900: var(--neutral-900); --color-stone-950: var(--neutral-950);
+  --color-indigo-50: var(--muted-50); --color-indigo-100: var(--muted-100); --color-indigo-200: var(--muted-200); --color-indigo-300: var(--muted-300); --color-indigo-400: var(--muted-400); --color-indigo-500: var(--muted-500); --color-indigo-600: var(--muted-600); --color-indigo-700: var(--muted-700); --color-indigo-800: var(--muted-800); --color-indigo-900: var(--muted-900); --color-indigo-950: var(--muted-950);
+  --color-violet-50: var(--muted-50); --color-violet-100: var(--muted-100); --color-violet-200: var(--muted-200); --color-violet-300: var(--muted-300); --color-violet-400: var(--muted-400); --color-violet-500: var(--muted-500); --color-violet-600: var(--muted-600); --color-violet-700: var(--muted-700); --color-violet-800: var(--muted-800); --color-violet-900: var(--muted-900); --color-violet-950: var(--muted-950);
+  --color-purple-50: var(--muted-50); --color-purple-100: var(--muted-100); --color-purple-200: var(--muted-200); --color-purple-300: var(--muted-300); --color-purple-400: var(--muted-400); --color-purple-500: var(--muted-500); --color-purple-600: var(--muted-600); --color-purple-700: var(--muted-700); --color-purple-800: var(--muted-800); --color-purple-900: var(--muted-900); --color-purple-950: var(--muted-950);
+  --color-fuchsia-50: var(--muted-50); --color-fuchsia-100: var(--muted-100); --color-fuchsia-200: var(--muted-200); --color-fuchsia-300: var(--muted-300); --color-fuchsia-400: var(--muted-400); --color-fuchsia-500: var(--muted-500); --color-fuchsia-600: var(--muted-600); --color-fuchsia-700: var(--muted-700); --color-fuchsia-800: var(--muted-800); --color-fuchsia-900: var(--muted-900); --color-fuchsia-950: var(--muted-950);
+  --color-pink-50: var(--muted-50); --color-pink-100: var(--muted-100); --color-pink-200: var(--muted-200); --color-pink-300: var(--muted-300); --color-pink-400: var(--muted-400); --color-pink-500: var(--muted-500); --color-pink-600: var(--muted-600); --color-pink-700: var(--muted-700); --color-pink-800: var(--muted-800); --color-pink-900: var(--muted-900); --color-pink-950: var(--muted-950);
+  --color-sky-50: var(--muted-50); --color-sky-100: var(--muted-100); --color-sky-200: var(--muted-200); --color-sky-300: var(--muted-300); --color-sky-400: var(--muted-400); --color-sky-500: var(--muted-500); --color-sky-600: var(--muted-600); --color-sky-700: var(--muted-700); --color-sky-800: var(--muted-800); --color-sky-900: var(--muted-900); --color-sky-950: var(--muted-950);
+  --color-cyan-50: var(--muted-50); --color-cyan-100: var(--muted-100); --color-cyan-200: var(--muted-200); --color-cyan-300: var(--muted-300); --color-cyan-400: var(--muted-400); --color-cyan-500: var(--muted-500); --color-cyan-600: var(--muted-600); --color-cyan-700: var(--muted-700); --color-cyan-800: var(--muted-800); --color-cyan-900: var(--muted-900); --color-cyan-950: var(--muted-950);
+  --color-teal-50: var(--muted-50); --color-teal-100: var(--muted-100); --color-teal-200: var(--muted-200); --color-teal-300: var(--muted-300); --color-teal-400: var(--muted-400); --color-teal-500: var(--muted-500); --color-teal-600: var(--muted-600); --color-teal-700: var(--muted-700); --color-teal-800: var(--muted-800); --color-teal-900: var(--muted-900); --color-teal-950: var(--muted-950);
+  /* blue -> accent */
+  --color-blue-50: var(--accent-50); --color-blue-100: var(--accent-100); --color-blue-200: var(--accent-200); --color-blue-300: var(--accent-300); --color-blue-400: var(--accent-400); --color-blue-500: var(--accent-500); --color-blue-600: var(--accent-600); --color-blue-700: var(--accent-700); --color-blue-800: var(--accent-800); --color-blue-900: var(--accent-900); --color-blue-950: var(--accent-950);
+  /* red, rose -> danger */
+  --color-red-50: var(--danger-50); --color-red-100: var(--danger-100); --color-red-200: var(--danger-200); --color-red-300: var(--danger-300); --color-red-400: var(--danger-400); --color-red-500: var(--danger-500); --color-red-600: var(--danger-600); --color-red-700: var(--danger-700); --color-red-800: var(--danger-800); --color-red-900: var(--danger-900); --color-red-950: var(--danger-950);
+  --color-rose-50: var(--danger-50); --color-rose-100: var(--danger-100); --color-rose-200: var(--danger-200); --color-rose-300: var(--danger-300); --color-rose-400: var(--danger-400); --color-rose-500: var(--danger-500); --color-rose-600: var(--danger-600); --color-rose-700: var(--danger-700); --color-rose-800: var(--danger-800); --color-rose-900: var(--danger-900); --color-rose-950: var(--danger-950);
+  /* green, emerald, lime -> success */
+  --color-green-50: var(--success-50); --color-green-100: var(--success-100); --color-green-200: var(--success-200); --color-green-300: var(--success-300); --color-green-400: var(--success-400); --color-green-500: var(--success-500); --color-green-600: var(--success-600); --color-green-700: var(--success-700); --color-green-800: var(--success-800); --color-green-900: var(--success-900); --color-green-950: var(--success-950);
+  --color-emerald-50: var(--success-50); --color-emerald-100: var(--success-100); --color-emerald-200: var(--success-200); --color-emerald-300: var(--success-300); --color-emerald-400: var(--success-400); --color-emerald-500: var(--success-500); --color-emerald-600: var(--success-600); --color-emerald-700: var(--success-700); --color-emerald-800: var(--success-800); --color-emerald-900: var(--success-900); --color-emerald-950: var(--success-950);
+  --color-lime-50: var(--success-50); --color-lime-100: var(--success-100); --color-lime-200: var(--success-200); --color-lime-300: var(--success-300); --color-lime-400: var(--success-400); --color-lime-500: var(--success-500); --color-lime-600: var(--success-600); --color-lime-700: var(--success-700); --color-lime-800: var(--success-800); --color-lime-900: var(--success-900); --color-lime-950: var(--success-950);
+  /* amber, yellow, orange -> warning */
+  --color-amber-50: var(--warning-50); --color-amber-100: var(--warning-100); --color-amber-200: var(--warning-200); --color-amber-300: var(--warning-300); --color-amber-400: var(--warning-400); --color-amber-500: var(--warning-500); --color-amber-600: var(--warning-600); --color-amber-700: var(--warning-700); --color-amber-800: var(--warning-800); --color-amber-900: var(--warning-900); --color-amber-950: var(--warning-950);
+  --color-yellow-50: var(--warning-50); --color-yellow-100: var(--warning-100); --color-yellow-200: var(--warning-200); --color-yellow-300: var(--warning-300); --color-yellow-400: var(--warning-400); --color-yellow-500: var(--warning-500); --color-yellow-600: var(--warning-600); --color-yellow-700: var(--warning-700); --color-yellow-800: var(--warning-800); --color-yellow-900: var(--warning-900); --color-yellow-950: var(--warning-950);
+  --color-orange-50: var(--warning-50); --color-orange-100: var(--warning-100); --color-orange-200: var(--warning-200); --color-orange-300: var(--warning-300); --color-orange-400: var(--warning-400); --color-orange-500: var(--warning-500); --color-orange-600: var(--warning-600); --color-orange-700: var(--warning-700); --color-orange-800: var(--warning-800); --color-orange-900: var(--warning-900); --color-orange-950: var(--warning-950);
+}
+
+/* ── Dark ("Ink"): the default, and the Split sidebar ─────────────────────── */
+:root, [data-theme="dark"], [data-theme="split"] .theme-invert {
+  color-scheme: dark;
+  --bg: #0A0A0A;
+  --panel: #141414;
+  --panel-alt: #1C1C1C;
+  --border: #2E2E2E;
+  --border-soft: #222222;
+  --text: #F5F5F5;
+  --text-dim: #A3A3A3;
+  --text-faint: #8F8F8F;
+  --accent: #D71920;          /* fills: main buttons, active bars */
+  --accent-hover: #E0353A;
+  --accent-text: #F2555A;     /* red text and lines on black: a lighter tint of the same red */
+  --on-accent: #FFFFFF;
+  --on-warning: #111111;     /* text on an amber fill */
+  --success: #4ADE80;
+  --danger: #FF6B6B;
+  --amber: #FBBF24;
+  --blue: var(--accent-text); /* older screens name the accent "blue" */
+  --purple: #A3A3A3;
+  --pink: #F2555A;
+  --white: #F5F5F5;
+  --signal-gradient: linear-gradient(var(--accent), var(--accent));
+  --overlay: rgba(0, 0, 0, 0.6);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+
+  --neutral-50: #141414; --neutral-100: #1C1C1C; --neutral-200: #2E2E2E; --neutral-300: #3A3A3A;
+  --neutral-400: #8F8F8F; --neutral-500: #A3A3A3; --neutral-600: #B5B5B5; --neutral-700: #D4D4D4;
+  --neutral-800: #E5E5E5; --neutral-900: #F5F5F5; --neutral-950: #FAFAFA;
+  --muted-50: #141414; --muted-100: #1C1C1C; --muted-200: #2E2E2E; --muted-300: #3A3A3A;
+  --muted-400: #8F8F8F; --muted-500: #525252; --muted-600: #404040; --muted-700: #3A3A3A;
+  --muted-800: #E5E5E5; --muted-900: #F5F5F5; --muted-950: #FAFAFA;
+
+  --accent-50: #2A1213; --accent-100: #3A1517; --accent-200: #5C1D21; --accent-300: #8A2A2F;
+  --accent-400: #F2555A; --accent-500: #F2555A; --accent-600: #D71920; --accent-700: #B3141A;
+  --accent-800: #F67A7E; --accent-900: #FBA5A8; --accent-950: #FDD0D1;
+
+  --danger-50: #2A1414; --danger-100: #3A1818; --danger-200: #5C2020; --danger-300: #8A2C2C;
+  --danger-400: #FF6B6B; --danger-500: #F87171; --danger-600: #DC2626; --danger-700: #B91C1C;
+  --danger-800: #FCA5A5; --danger-900: #FECACA; --danger-950: #FEE2E2;
+
+  --success-50: #0F2418; --success-100: #12301F; --success-200: #1C4A30; --success-300: #2E6E48;
+  --success-400: #4ADE80; --success-500: #22C55E; --success-600: #15803D; --success-700: #166534;
+  --success-800: #86EFAC; --success-900: #BBF7D0; --success-950: #DCFCE7;
+
+  --warning-50: #2A2008; --warning-100: #3A2C0A; --warning-200: #5C4510; --warning-300: #8A6718;
+  --warning-400: #FBBF24; --warning-500: #F59E0B; --warning-600: #B45309; --warning-700: #92400E;
+  --warning-800: #FCD34D; --warning-900: #FDE68A; --warning-950: #FEF3C7;
+}
+
+/* ── Light ("Paper"), Split's content, and the white document page in every theme ── */
+[data-theme="light"], [data-theme="split"], .doc-page {
+  color-scheme: light;
+  --bg: #FFFFFF;
+  --panel: #FFFFFF;
+  --panel-alt: #F5F5F5;
+  --border: #E0E0E0;
+  --border-soft: #EDEDED;
+  --text: #111111;
+  --text-dim: #5C5C5C;
+  --text-faint: #6B6B6B;
+  --accent: #D71920;
+  --accent-hover: #B3141A;
+  --accent-text: #B3141A;     /* red text on white: one shade deeper, for contrast */
+  --on-accent: #FFFFFF;
+  --on-warning: #111111;     /* text on an amber fill */
+  --success: #146C2E;
+  --danger: #B42318;
+  --amber: #8A5300;
+  --blue: var(--accent-text);
+  --purple: #5C5C5C;
+  --pink: #B3141A;
+  --white: #111111;
+  --signal-gradient: linear-gradient(var(--accent), var(--accent));
+  --overlay: rgba(17, 17, 17, 0.4);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+
+  --neutral-50: #FAFAFA; --neutral-100: #F5F5F5; --neutral-200: #E5E5E5; --neutral-300: #D4D4D4;
+  --neutral-400: #707070; --neutral-500: #666666; --neutral-600: #525252; --neutral-700: #404040;
+  --neutral-800: #262626; --neutral-900: #171717; --neutral-950: #0A0A0A;
+  --muted-50: #FAFAFA; --muted-100: #F5F5F5; --muted-200: #E5E5E5; --muted-300: #D4D4D4;
+  --muted-400: #707070; --muted-500: #5C5C5C; --muted-600: #404040; --muted-700: #333333;
+  --muted-800: #262626; --muted-900: #171717; --muted-950: #0A0A0A;
+
+  --accent-50: #FEF2F2; --accent-100: #FDE3E3; --accent-200: #FBC9CA; --accent-300: #F59EA0;
+  --accent-400: #E0353A; --accent-500: #D71920; --accent-600: #D71920; --accent-700: #B3141A;
+  --accent-800: #8E1015; --accent-900: #6B0C10; --accent-950: #4A080B;
+
+  --danger-50: #FEF2F2; --danger-100: #FEE2E2; --danger-200: #FECACA; --danger-300: #FCA5A5;
+  --danger-400: #F87171; --danger-500: #EF4444; --danger-600: #DC2626; --danger-700: #B91C1C;
+  --danger-800: #991B1B; --danger-900: #7F1D1D; --danger-950: #450A0A;
+
+  --success-50: #F0FDF4; --success-100: #DCFCE7; --success-200: #BBF7D0; --success-300: #86EFAC;
+  --success-400: #4ADE80; --success-500: #22C55E; --success-600: #16A34A; --success-700: #15803D;
+  --success-800: #166534; --success-900: #14532D; --success-950: #052E16;
+
+  --warning-50: #FFFBEB; --warning-100: #FEF3C7; --warning-200: #FDE68A; --warning-300: #FCD34D;
+  --warning-400: #FBBF24; --warning-500: #F59E0B; --warning-600: #D97706; --warning-700: #B45309;
+  --warning-800: #92400E; --warning-900: #78350F; --warning-950: #451A03;
+}
+
+/* The page that gets exported stays white in every theme, as in Word or Google Docs. */
+:root {
+  --doc-paper-bg: #FFFFFF;
+  --doc-paper-text: #1A1A1A;
+  --doc-paper-dim: #444444;
+  --doc-primary: #111111;
+  --doc-rule: var(--accent);
+  --doc-border: #DDDDDD;
+  --doc-table-header-bg: #F5F5F5;
+  --doc-code-bg: #F7F7F7;
+  --doc-code-border: #E5E5E5;
+}
+
+/* ── Dark-only adjustments ─────────────────────────────────────────────────── */
+/* One Tailwind shade is used both as a fill (bg-emerald-700, white text on it) and as
+   text (text-emerald-700 on a light page). On black the fill must stay deep and the
+   text must be bright, so in Dark coloured text uses the bright step of its scale. */
+[data-theme="dark"] .text-blue-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-blue-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-blue-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-blue-600:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-blue-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-blue-600:not(.doc-page *),
+[data-theme="dark"] .text-blue-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-blue-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-blue-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-blue-700:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-blue-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-blue-700:not(.doc-page *),
+[data-theme="dark"] .text-blue-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-blue-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-blue-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-blue-800:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-blue-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-blue-800:not(.doc-page *),
+[data-theme="dark"] .text-blue-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-blue-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-blue-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-blue-900:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-blue-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-blue-900:not(.doc-page *) { color: var(--accent-text); }
+[data-theme="dark"] .text-red-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-red-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-red-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-red-600:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-red-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-red-600:not(.doc-page *),
+[data-theme="dark"] .text-red-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-red-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-red-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-red-700:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-red-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-red-700:not(.doc-page *),
+[data-theme="dark"] .text-red-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-red-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-red-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-red-800:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-red-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-red-800:not(.doc-page *),
+[data-theme="dark"] .text-red-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-red-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-red-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-red-900:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-red-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-red-900:not(.doc-page *),
+[data-theme="dark"] .text-rose-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-rose-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-rose-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-rose-600:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-rose-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-rose-600:not(.doc-page *),
+[data-theme="dark"] .text-rose-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-rose-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-rose-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-rose-700:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-rose-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-rose-700:not(.doc-page *),
+[data-theme="dark"] .text-rose-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-rose-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-rose-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-rose-800:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-rose-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-rose-800:not(.doc-page *),
+[data-theme="dark"] .text-rose-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-rose-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-rose-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-rose-900:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-rose-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-rose-900:not(.doc-page *) { color: var(--danger); }
+[data-theme="dark"] .text-green-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-green-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-green-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-green-600:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-green-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-green-600:not(.doc-page *),
+[data-theme="dark"] .text-green-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-green-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-green-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-green-700:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-green-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-green-700:not(.doc-page *),
+[data-theme="dark"] .text-green-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-green-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-green-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-green-800:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-green-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-green-800:not(.doc-page *),
+[data-theme="dark"] .text-green-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-green-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-green-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-green-900:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-green-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-green-900:not(.doc-page *),
+[data-theme="dark"] .text-emerald-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-emerald-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-emerald-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-emerald-600:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-emerald-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-emerald-600:not(.doc-page *),
+[data-theme="dark"] .text-emerald-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-emerald-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-emerald-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-emerald-700:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-emerald-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-emerald-700:not(.doc-page *),
+[data-theme="dark"] .text-emerald-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-emerald-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-emerald-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-emerald-800:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-emerald-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-emerald-800:not(.doc-page *),
+[data-theme="dark"] .text-emerald-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-emerald-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-emerald-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-emerald-900:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-emerald-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-emerald-900:not(.doc-page *),
+[data-theme="dark"] .text-lime-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-lime-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-lime-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-lime-600:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-lime-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-lime-600:not(.doc-page *),
+[data-theme="dark"] .text-lime-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-lime-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-lime-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-lime-700:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-lime-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-lime-700:not(.doc-page *),
+[data-theme="dark"] .text-lime-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-lime-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-lime-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-lime-800:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-lime-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-lime-800:not(.doc-page *),
+[data-theme="dark"] .text-lime-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-lime-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-lime-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-lime-900:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-lime-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-lime-900:not(.doc-page *) { color: var(--success); }
+[data-theme="dark"] .text-amber-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-amber-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-amber-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-amber-600:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-amber-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-amber-600:not(.doc-page *),
+[data-theme="dark"] .text-amber-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-amber-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-amber-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-amber-700:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-amber-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-amber-700:not(.doc-page *),
+[data-theme="dark"] .text-amber-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-amber-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-amber-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-amber-800:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-amber-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-amber-800:not(.doc-page *),
+[data-theme="dark"] .text-amber-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-amber-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-amber-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-amber-900:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-amber-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-amber-900:not(.doc-page *),
+[data-theme="dark"] .text-yellow-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-yellow-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-yellow-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-yellow-600:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-yellow-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-yellow-600:not(.doc-page *),
+[data-theme="dark"] .text-yellow-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-yellow-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-yellow-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-yellow-700:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-yellow-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-yellow-700:not(.doc-page *),
+[data-theme="dark"] .text-yellow-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-yellow-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-yellow-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-yellow-800:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-yellow-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-yellow-800:not(.doc-page *),
+[data-theme="dark"] .text-yellow-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-yellow-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-yellow-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-yellow-900:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-yellow-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-yellow-900:not(.doc-page *),
+[data-theme="dark"] .text-orange-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-orange-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-orange-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-orange-600:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-orange-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-orange-600:not(.doc-page *),
+[data-theme="dark"] .text-orange-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-orange-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-orange-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-orange-700:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-orange-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-orange-700:not(.doc-page *),
+[data-theme="dark"] .text-orange-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-orange-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-orange-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-orange-800:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-orange-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-orange-800:not(.doc-page *),
+[data-theme="dark"] .text-orange-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-orange-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-orange-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-orange-900:hover:not(.doc-page *),
+[data-theme="dark"] .group-hover\:text-orange-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .group-hover\:text-orange-900:not(.doc-page *) { color: var(--amber); }
+
+/* White panels become the theme's panel; a dark "inverse" surface (a tooltip or code
+   block meant to stand out on a light page) stays dark instead of turning light. */
+[data-theme="dark"] .bg-white:not(.doc-page *), [data-theme="split"] .theme-invert .bg-white:not(.doc-page *) { background-color: var(--panel); }
+[data-theme="dark"] .hover\:bg-white:hover:not(.doc-page *), [data-theme="split"] .theme-invert .hover\:bg-white:hover:not(.doc-page *) { background-color: var(--panel-alt); }
+[data-theme="dark"] .bg-slate-900:not(.doc-page *), [data-theme="dark"] .bg-slate-800:not(.doc-page *), [data-theme="dark"] .bg-gray-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .bg-slate-900:not(.doc-page *), [data-theme="split"] .theme-invert .bg-slate-800:not(.doc-page *) { background-color: #262626; }
+
+/* Decorative text colours (purple, indigo...) on black read as the dim text colour. */
+[data-theme="dark"] .text-indigo-500:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-indigo-500:not(.doc-page *),
+[data-theme="dark"] .hover\:text-indigo-500:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-indigo-500:hover:not(.doc-page *),
+[data-theme="dark"] .text-indigo-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-indigo-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-indigo-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-indigo-600:hover:not(.doc-page *),
+[data-theme="dark"] .text-indigo-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-indigo-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-indigo-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-indigo-700:hover:not(.doc-page *),
+[data-theme="dark"] .text-indigo-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-indigo-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-indigo-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-indigo-800:hover:not(.doc-page *),
+[data-theme="dark"] .text-indigo-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-indigo-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-indigo-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-indigo-900:hover:not(.doc-page *),
+[data-theme="dark"] .text-violet-500:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-violet-500:not(.doc-page *),
+[data-theme="dark"] .hover\:text-violet-500:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-violet-500:hover:not(.doc-page *),
+[data-theme="dark"] .text-violet-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-violet-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-violet-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-violet-600:hover:not(.doc-page *),
+[data-theme="dark"] .text-violet-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-violet-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-violet-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-violet-700:hover:not(.doc-page *),
+[data-theme="dark"] .text-violet-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-violet-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-violet-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-violet-800:hover:not(.doc-page *),
+[data-theme="dark"] .text-violet-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-violet-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-violet-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-violet-900:hover:not(.doc-page *),
+[data-theme="dark"] .text-purple-500:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-purple-500:not(.doc-page *),
+[data-theme="dark"] .hover\:text-purple-500:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-purple-500:hover:not(.doc-page *),
+[data-theme="dark"] .text-purple-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-purple-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-purple-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-purple-600:hover:not(.doc-page *),
+[data-theme="dark"] .text-purple-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-purple-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-purple-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-purple-700:hover:not(.doc-page *),
+[data-theme="dark"] .text-purple-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-purple-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-purple-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-purple-800:hover:not(.doc-page *),
+[data-theme="dark"] .text-purple-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-purple-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-purple-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-purple-900:hover:not(.doc-page *),
+[data-theme="dark"] .text-fuchsia-500:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-fuchsia-500:not(.doc-page *),
+[data-theme="dark"] .hover\:text-fuchsia-500:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-fuchsia-500:hover:not(.doc-page *),
+[data-theme="dark"] .text-fuchsia-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-fuchsia-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-fuchsia-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-fuchsia-600:hover:not(.doc-page *),
+[data-theme="dark"] .text-fuchsia-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-fuchsia-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-fuchsia-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-fuchsia-700:hover:not(.doc-page *),
+[data-theme="dark"] .text-fuchsia-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-fuchsia-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-fuchsia-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-fuchsia-800:hover:not(.doc-page *),
+[data-theme="dark"] .text-fuchsia-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-fuchsia-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-fuchsia-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-fuchsia-900:hover:not(.doc-page *),
+[data-theme="dark"] .text-pink-500:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-pink-500:not(.doc-page *),
+[data-theme="dark"] .hover\:text-pink-500:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-pink-500:hover:not(.doc-page *),
+[data-theme="dark"] .text-pink-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-pink-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-pink-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-pink-600:hover:not(.doc-page *),
+[data-theme="dark"] .text-pink-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-pink-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-pink-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-pink-700:hover:not(.doc-page *),
+[data-theme="dark"] .text-pink-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-pink-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-pink-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-pink-800:hover:not(.doc-page *),
+[data-theme="dark"] .text-pink-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-pink-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-pink-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-pink-900:hover:not(.doc-page *),
+[data-theme="dark"] .text-sky-500:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-sky-500:not(.doc-page *),
+[data-theme="dark"] .hover\:text-sky-500:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-sky-500:hover:not(.doc-page *),
+[data-theme="dark"] .text-sky-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-sky-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-sky-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-sky-600:hover:not(.doc-page *),
+[data-theme="dark"] .text-sky-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-sky-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-sky-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-sky-700:hover:not(.doc-page *),
+[data-theme="dark"] .text-sky-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-sky-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-sky-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-sky-800:hover:not(.doc-page *),
+[data-theme="dark"] .text-sky-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-sky-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-sky-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-sky-900:hover:not(.doc-page *),
+[data-theme="dark"] .text-cyan-500:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-cyan-500:not(.doc-page *),
+[data-theme="dark"] .hover\:text-cyan-500:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-cyan-500:hover:not(.doc-page *),
+[data-theme="dark"] .text-cyan-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-cyan-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-cyan-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-cyan-600:hover:not(.doc-page *),
+[data-theme="dark"] .text-cyan-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-cyan-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-cyan-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-cyan-700:hover:not(.doc-page *),
+[data-theme="dark"] .text-cyan-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-cyan-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-cyan-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-cyan-800:hover:not(.doc-page *),
+[data-theme="dark"] .text-cyan-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-cyan-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-cyan-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-cyan-900:hover:not(.doc-page *),
+[data-theme="dark"] .text-teal-500:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-teal-500:not(.doc-page *),
+[data-theme="dark"] .hover\:text-teal-500:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-teal-500:hover:not(.doc-page *),
+[data-theme="dark"] .text-teal-600:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-teal-600:not(.doc-page *),
+[data-theme="dark"] .hover\:text-teal-600:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-teal-600:hover:not(.doc-page *),
+[data-theme="dark"] .text-teal-700:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-teal-700:not(.doc-page *),
+[data-theme="dark"] .hover\:text-teal-700:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-teal-700:hover:not(.doc-page *),
+[data-theme="dark"] .text-teal-800:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-teal-800:not(.doc-page *),
+[data-theme="dark"] .hover\:text-teal-800:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-teal-800:hover:not(.doc-page *),
+[data-theme="dark"] .text-teal-900:not(.doc-page *),
+[data-theme="split"] .theme-invert .text-teal-900:not(.doc-page *),
+[data-theme="dark"] .hover\:text-teal-900:hover:not(.doc-page *),
+[data-theme="split"] .theme-invert .hover\:text-teal-900:hover:not(.doc-page *) { color: var(--text-dim); }

@@ -33,10 +33,10 @@ interface DashboardPageProps {
 const ACTIVITY_LIMIT = 8;
 
 const STATUS: Record<DocStatus, { label: string; color: string; badge: string }> = {
-  DRAFT: { label: 'Draft', color: 'var(--text-faint)', badge: 'text-[var(--text-dim)] border-[var(--border)]' },
-  IN_REVIEW: { label: 'In review', color: 'var(--amber)', badge: 'status-warning' },
-  APPROVED: { label: 'Approved', color: 'var(--success)', badge: 'status-success' },
-  PUBLISHED: { label: 'Published', color: 'var(--blue)', badge: 'text-[var(--blue)] border-[var(--blue)] bg-[rgba(62,199,255,0.12)]' },
+  DRAFT: { label: 'Draft', color: 'var(--neutral-400)', badge: 'text-[var(--text-dim)] border-[var(--border)]' },
+  IN_REVIEW: { label: 'In review', color: 'var(--warning-500)', badge: 'status-warning' },
+  APPROVED: { label: 'Approved', color: 'var(--success-500)', badge: 'status-success' },
+  PUBLISHED: { label: 'Published', color: 'var(--text)', badge: 'text-[var(--text)] border-[var(--text)] bg-[var(--panel-alt)]' },
 };
 
 function getGreeting(): string {
@@ -179,7 +179,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onNavigate, 
         </header>
 
         <main className="flex-1 overflow-y-auto p-6 md:p-7 space-y-6">
-          {statsError && <p role="alert" className="rounded-lg border border-[var(--danger)] bg-[rgba(255,84,112,0.12)] px-3 py-2 text-xs text-[var(--danger)]">Could not load the document counts: {statsError}</p>}
+          {statsError && <p role="alert" className="rounded-lg border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] px-3 py-2 text-xs text-[var(--danger)]">Could not load the document counts: {statsError}</p>}
 
           <section aria-label="Document counts" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <StatCard label="Total documents" value={count(stats?.total)} note="Every document created, except those in the Doc Bin" onOpen={() => onOpenDocuments(null)} />

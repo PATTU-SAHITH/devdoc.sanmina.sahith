@@ -34,6 +34,7 @@ import { CiTokensPanel } from './CiTokensPanel';
 import { TrackersPanel } from './TrackersPanel';
 import { SessionAuditTable } from './SessionAuditTable';
 import { canAccessDataManagement } from '../../services/permissions';
+import { THEMES, setTheme, useTheme, type ThemeId } from '../../services/themeService';
 
 /* ─── Props ─── */
 interface SettingsPageProps {
@@ -47,6 +48,24 @@ interface SettingsPageProps {
 }
 
 /* ─── Section tab definition ─── */
+/** A miniature of the theme: sidebar, header bar and an accent button. */
+const ThemePreview: React.FC<{ id: ThemeId }> = ({ id }) => {
+  const dark = id === 'dark';
+  const sidebar = id === 'light' ? '#FAFAFA' : '#111111';
+  const page = dark ? '#0A0A0A' : '#FFFFFF';
+  const line = dark ? '#2E2E2E' : '#E5E5E5';
+  return (
+    <span aria-hidden className="flex h-16 overflow-hidden rounded-lg border" style={{ borderColor: line, background: page }}>
+      <span className="w-1/4 h-full" style={{ background: sidebar, borderRight: `1px solid ${id === 'light' ? line : '#111111'}` }} />
+      <span className="flex-1 p-2 flex flex-col gap-1.5">
+        <span className="h-1.5 w-2/3 rounded" style={{ background: line }} />
+        <span className="h-1.5 w-1/2 rounded" style={{ background: line }} />
+        <span className="mt-auto h-2.5 w-8 rounded" style={{ background: 'var(--accent)' }} />
+      </span>
+    </span>
+  );
+};
+
 export type SettingsTab = 'profile' | 'ai' | 'notifications' | 'appearance' | 'data';
 
 const TABS: { id: SettingsTab; label: string; icon: React.ElementType; desc: string }[] = [
@@ -65,13 +84,13 @@ const ROLE_LABELS: Record<string, string> = {
 /* ─── Small reusable sub-components ─── */
 function SectionHeader({ icon: Icon, title, desc }: { icon: React.ElementType; title: string; desc: string }) {
   return (
-    <div className="flex items-center gap-3 pb-3 border-b border-[#28395a]">
-      <div className="w-9 h-9 border border-[#28395a] bg-[#16223a] flex items-center justify-center shrink-0">
-        <Icon className="w-4 h-4 text-[#3ec7ff]" />
+    <div className="flex items-center gap-3 pb-3 border-b border-[var(--border)]">
+      <div className="w-9 h-9 border border-[var(--border)] bg-[var(--panel-alt)] flex items-center justify-center shrink-0">
+        <Icon className="w-4 h-4 text-[var(--accent-text)]" />
       </div>
       <div>
-        <h2 className="text-base font-bold text-[#eef3ff] leading-tight">{title}</h2>
-        <p className="text-[11px] text-[#96a8c9]">{desc}</p>
+        <h2 className="text-base font-bold text-[var(--text)] leading-tight">{title}</h2>
+        <p className="text-[11px] text-[var(--text-dim)]">{desc}</p>
       </div>
     </div>
   );
@@ -85,7 +104,7 @@ function FieldRow({ icon: Icon, label, children }: { icon: React.ElementType; la
   return (
     <div className="space-y-1.5">
       <label className="ui-label flex items-center gap-1.5">
-        <Icon className="w-3.5 h-3.5 text-[#3ec7ff]" />
+        <Icon className="w-3.5 h-3.5 text-[var(--accent-text)]" />
         {label}
       </label>
       {children}
@@ -114,8 +133,8 @@ function ToggleRow({ label, desc, defaultChecked }: { label: string; desc: strin
 
 function InfoBanner({ text }: { text: string }) {
   return (
-    <div className="ui-panel flex items-start gap-2.5 p-3.5 text-[11px] font-semibold text-[#eef3ff]">
-      <Info className="w-4 h-4 text-[#3ec7ff] shrink-0 mt-0.5" />
+    <div className="ui-panel flex items-start gap-2.5 p-3.5 text-[11px] font-semibold text-[var(--text)]">
+      <Info className="w-4 h-4 text-[var(--accent-text)] shrink-0 mt-0.5" />
       <span>{text}</span>
     </div>
   );
@@ -123,6 +142,7 @@ function InfoBanner({ text }: { text: string }) {
 
 /* ─── Main Component ─── */
 export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onNavigate, onLogout, onUpdateAvatar, activeTab: requestedTab, onTabChange }) => {
+  const theme = useTheme();
   // System & Storage is open to everyone: the VS Code address (this
   // browser only) and the session audit log - everyone's for an admin,
   // your own otherwise (the server filters it, DDS-SRS-011). Test
@@ -177,9 +197,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onNavigate, on
               return (
                 <button key={tab.id} type="button" onClick={() => onTabChange(tab.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all group border ${
-                    active ? 'bg-[#16223a] border-[#3ec7ff] text-[#eef3ff] font-bold' : 'text-[#96a8c9] hover:text-[#eef3ff] hover:bg-[#16223a] border-transparent'
+                    active ? 'bg-[var(--panel-alt)] border-[var(--accent-text)] text-[var(--text)] font-bold' : 'text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-[var(--panel-alt)] border-transparent'
                   }`}>
-                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[#3ec7ff]' : 'group-hover:text-[#3ec7ff] text-[#96a8c9]'}`} />
+                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[var(--accent-text)]' : 'group-hover:text-[var(--accent-text)] text-[var(--text-dim)]'}`} />
                   <div className="min-w-0">
                     <div className="text-xs font-semibold truncate">{tab.label}</div>
                     <div className="text-[10px] text-slate-400 truncate">{tab.desc}</div>
@@ -203,7 +223,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onNavigate, on
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt={`${user.name} profile`} className="w-16 h-16 rounded-2xl object-cover shadow-md shrink-0" />
                   ) : (
-                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-tr ${user.avatarBg} flex items-center justify-center text-xl font-black text-white shadow-md shrink-0`}>
+                    <div className={`w-16 h-16 rounded-2xl bg-[var(--accent)] flex items-center justify-center text-xl font-black text-white shadow-md shrink-0`}>
                       {user.initials}
                     </div>
                   )}
@@ -371,28 +391,23 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onNavigate, on
             {activeTab === 'appearance' && (
               <section className="space-y-6">
                 <SectionHeader icon={Palette} title="Appearance" desc="Customize the platform look and feel." />
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-5 shadow-xs">
-                  <div className="space-y-2">
-                    <Label>Theme</Label>
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {[
-                        { id: 'light',  label: 'Light', bg: 'bg-slate-100', active: true },
-                        { id: 'dark',   label: 'Dark',  bg: 'bg-slate-900', active: false },
-                        { id: 'abyss',  label: 'Abyss', bg: 'bg-black',     active: false },
-                      ].map((t) => (
-                        <button key={t.id} type="button" disabled={!t.active}
-                          className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-xs font-semibold transition-all ${
-                            t.active ? 'bg-blue-50 border-blue-300 text-blue-900 shadow-xs' : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
-                          }`}>
-                          <div className={`w-full h-8 rounded-lg ${t.bg} border border-slate-200`} />
-                          {t.label}
-                          {!t.active && <span className="text-[10px] text-slate-400 font-normal">Coming soon</span>}
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
+                  <Label>Theme</Label>
+                  <div role="radiogroup" aria-label="Theme" className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {THEMES.map((t) => {
+                      const selected = theme === t.id;
+                      return (
+                        <button key={t.id} type="button" role="radio" aria-checked={selected} onClick={() => setTheme(t.id)}
+                          className={`text-left rounded-xl border p-3 transition-colors ${selected ? 'border-[var(--accent)] ring-1 ring-[var(--accent)]' : 'border-[var(--border)] hover:border-[var(--text-faint)]'}`}>
+                          <ThemePreview id={t.id} />
+                          <span data-theme-name className="mt-2 block text-sm font-semibold text-[var(--text)]">{t.label}</span>
+                          <span className="block text-[11px] text-[var(--text-dim)]">{t.description}</span>
                         </button>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
-                <InfoBanner text="Light theme is enabled application-wide." />
+                <InfoBanner text="The theme applies to every screen in this browser and is remembered for next time." />
               </section>
             )}
 

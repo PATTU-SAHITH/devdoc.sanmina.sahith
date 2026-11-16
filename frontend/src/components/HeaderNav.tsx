@@ -488,7 +488,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
           <div className="relative ml-1">
             <button
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className={`w-7 h-7 rounded-lg bg-gradient-to-tr ${user.avatarBg} flex items-center justify-center text-xs font-bold text-white shadow-xs ring-1 ring-slate-200`}
+              className={`w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center text-xs font-bold text-white shadow-xs ring-1 ring-slate-200`}
               title={user.name}
             >
               {user.initials}

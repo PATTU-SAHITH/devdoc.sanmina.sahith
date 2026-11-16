@@ -28,7 +28,7 @@ export const OperationsLayout: React.FC<OperationsLayoutProps> = ({
   onNavigate,
 }) => {
   return (
-    <div className="flex h-screen bg-[#0a0a0a] text-[#ededed] font-sans overflow-hidden">
+    <div className="flex h-screen bg-[var(--bg)] text-[var(--text)] font-sans overflow-hidden">
       <AppSidebar
         user={user}
         activeView="operations"
@@ -37,7 +37,7 @@ export const OperationsLayout: React.FC<OperationsLayoutProps> = ({
         onLogout={onLogout}
       />
 
-      <main className="flex-1 flex flex-col overflow-y-auto bg-[#0a0a0a] p-6 md:p-8">
+      <main className="flex-1 flex flex-col overflow-y-auto bg-[var(--bg)] p-6 md:p-8">
         {activeTab === 'releases' && (
           <ReleaseMaster />
         )}

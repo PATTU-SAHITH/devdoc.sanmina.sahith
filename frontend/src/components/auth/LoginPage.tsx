@@ -78,7 +78,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-base tracking-[0.12em] text-[var(--text)] uppercase font-mono">DocCraft</span>
-              <span className="text-[9px] uppercase font-bold tracking-[0.14em] px-2 py-0.5 border border-[var(--success)] bg-[var(--panel-alt)] text-[var(--success)] font-mono">Enterprise Suite</span>
+              <span className="text-[9px] uppercase font-bold tracking-[0.14em] px-2 py-0.5 border border-[var(--accent-text)] bg-[var(--panel-alt)] text-[var(--accent-text)] font-mono">Enterprise Suite</span>
             </div>
             <p className="text-[11px] text-[var(--text-dim)] font-medium uppercase tracking-[0.1em] font-mono">Platform Engineering &amp; Release Operations Hub</p>
           </div>
@@ -99,7 +99,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <form onSubmit={handleSubmit} className="space-y-4 mt-6">
             <div className="space-y-1.5 text-left">
               <label className="text-[10px] font-semibold text-[var(--text-dim)] flex items-center gap-1.5 font-mono uppercase tracking-[0.12em]">
-                <Mail className="w-3.5 h-3.5 text-[var(--success)]" />
+                <Mail className="w-3.5 h-3.5 text-[var(--accent-text)]" />
                 <span>Corporate Email</span>
               </label>
               <input
@@ -108,13 +108,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 onChange={(event) => { setEmail(event.target.value); setError(''); }}
                 required
                 placeholder="engineer@sanmina.com"
-                className="w-full bg-[var(--bg)] border border-[var(--border)] px-3.5 py-2.5 text-xs text-[var(--text)] placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--success)]"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] px-3.5 py-2.5 text-xs text-[var(--text)] placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--accent-text)]"
               />
             </div>
 
             <div className="space-y-1.5 text-left">
               <label className="text-[10px] font-semibold text-[var(--text-dim)] flex items-center gap-1.5 font-mono uppercase tracking-[0.12em]">
-                <Lock className="w-3.5 h-3.5 text-[var(--success)]" />
+                <Lock className="w-3.5 h-3.5 text-[var(--accent-text)]" />
                 <span>Password</span>
               </label>
               <input
@@ -123,7 +123,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 onChange={(event) => { setPassword(event.target.value); setError(''); }}
                 required
                 placeholder="Enter your password"
-                className="w-full bg-[var(--bg)] border border-[var(--border)] px-3.5 py-2.5 text-xs text-[var(--text)] placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--success)] font-mono"
+                className="w-full bg-[var(--bg)] border border-[var(--border)] px-3.5 py-2.5 text-xs text-[var(--text)] placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--accent-text)] font-mono"
               />
             </div>
 
@@ -136,7 +136,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 border border-[var(--success)] bg-[image:var(--signal-gradient)] text-[#07111d] text-[10px] font-semibold flex items-center justify-center gap-2 font-mono uppercase tracking-[0.12em] disabled:opacity-50"
+              className="w-full py-2.5 border border-[var(--accent)] bg-[var(--accent)] text-[var(--on-accent)] text-[10px] font-semibold flex items-center justify-center gap-2 font-mono uppercase tracking-[0.12em] disabled:opacity-50"
             >
               <span>{isLoading ? 'Authenticating...' : 'Sign In to Platform'}</span>
               <ArrowRight className="w-4 h-4" />
