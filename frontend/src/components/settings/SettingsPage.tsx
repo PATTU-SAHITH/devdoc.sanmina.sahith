@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   User,
   Bot,
@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Info,
   Upload,
-  ShieldAlert
+  ShieldAlert,
+  LogOut,
 } from 'lucide-react';
 import type { AppView, OperationsTab } from '../../types/appState';
 import type { UserProfile } from '../../types/auth';
@@ -29,6 +30,7 @@ import {
 } from '../../services/aiService';
 import { ServerDataPanel } from './ServerDataPanel';
 import { AccessTokenPanel } from './AccessTokenPanel';
+import { AccountContext } from '../accountContext';
 import { isBackendConfigured } from '../../services/backendAuthService';
 import { TestServersPanel } from './TestServersPanel';
 import { CiTokensPanel } from './CiTokensPanel';
@@ -143,6 +145,7 @@ function InfoBanner({ text }: { text: string }) {
 /* ─── Main Component ─── */
 export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onNavigate, onUpdateAvatar, activeTab: requestedTab, onTabChange }) => {
   const theme = useTheme();
+  const account = useContext(AccountContext);
   // System & Storage is open to everyone: the VS Code address (this
   // browser only) and the session audit log - everyone's for an admin,
   // your own otherwise (the server filters it, DDS-SRS-011). Test
@@ -266,7 +269,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ user, onNavigate, on
                     </div>
                   ))}
                 </div>
-                <InfoBanner text="Profile data is read-only from your active session. Log out to switch accounts." />
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] px-5 py-4">
+                  <p className="text-xs text-[var(--text-dim)]">Profile data is read-only from your active session. Log out to switch accounts.</p>
+                  {account && (
+                    <button type="button" onClick={account.logout}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--on-accent)] text-xs font-semibold">
+                      <LogOut aria-hidden className="w-3.5 h-3.5" />Log out
+                    </button>
+                  )}
+                </div>
                 {isBackendConfigured() && <AccessTokenPanel />}
               </section>
             )}

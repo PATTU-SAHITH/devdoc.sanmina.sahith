@@ -88,3 +88,22 @@ describe('Settings → Appearance', () => {
     expect(document.documentElement.dataset.theme).toBe('light');
   });
 });
+
+describe('Settings → Profile', () => {
+  it('has a Log out button that signs out', async () => {
+    const { AccountContext } = await import('../accountContext');
+    const logout = vi.fn();
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+    act(() => root!.render(
+      <AccountContext.Provider value={{ user: makeUser(), openProfile: vi.fn(), logout }}>
+        <SettingsPage user={makeUser()} onNavigate={vi.fn()} onUpdateAvatar={vi.fn()} activeTab="profile" onTabChange={vi.fn()} />
+      </AccountContext.Provider>,
+    ));
+    const button = [...host.querySelectorAll<HTMLButtonElement>('main button')].find((b) => b.textContent?.trim() === 'Log out')!;
+    expect(button).toBeTruthy();
+    act(() => button.click());
+    expect(logout).toHaveBeenCalledOnce();
+  });
+});
